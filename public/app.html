@@ -1,0 +1,2593 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Générateur de Devis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700&family=Roboto+Slab:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #F5F1E8;
+    margin: 0;
+    padding: 24px;
+    color: #2C2C2A;
+  }
+  .conteneur {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  @media (max-width: 900px) {
+    .conteneur { grid-template-columns: 1fr; }
+  }
+  .bloc {
+    background: #F9F8F5;
+    border-top: 3px solid #8B6F47;
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  input, select, textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid #8B6F47;
+    border-radius: 6px;
+    font-size: 13px;
+    background-color: #FFFFFF;
+    color: #2C2C2A;
+    font-family: inherit;
+  }
+  label { font-size: 10px; color: #5C4033; font-weight: 600; }
+  .oblig { color: #E24B4A; font-size: 16px; font-weight: 800; margin-left: 2px; vertical-align: -1px; }
+  h1 { margin: 0; font-size: 24px; font-weight: 500; color: #5C4033; }
+  h3 { margin: 0; font-weight: 500; color: #5C4033; font-size: 14px; }
+  .ligne {
+    border: 1.5px solid #8B6F47;
+    background-color: #FDFBF9;
+    border-radius: 6px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .btn-principal {
+    width: 100%; padding: 12px; border: none; border-radius: 6px;
+    background-color: #5C4033; color: white; font-weight: 500;
+    font-size: 14px; cursor: pointer;
+  }
+  .btn-secondaire {
+    width: 100%; padding: 8px; border: 1.5px solid #8B6F47;
+    background-color: #FFFFFF; color: #8B6F47; border-radius: 6px;
+    font-size: 12px; cursor: pointer; font-weight: 500;
+  }
+  .btn-suppr {
+    padding: 6px 10px; border: 1.5px solid #E24B4A; background-color: #FCEBEB;
+    color: #A32D2D; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: 500;
+  }
+  .choix-template {
+    flex: 1; padding: 10px 8px; border: 1.5px solid #8B6F47; background: white;
+    color: #5C4033; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 500;
+    text-align: center;
+  }
+  .choix-template.actif { background-color: #8B6F47; color: white; }
+  #apercu {
+    background: white; border-radius: 12px; padding: 32px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 12.5px; line-height: 1.55;
+    transition: all 0.2s ease;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  th { text-align: left; padding: 6px 0; color: #5C4033; font-weight: 600; }
+  td { padding: 6px 0; color: #5C4033; border-bottom: 1px solid #E8E4DB; }
+
+  #apercu.template-epure { border-radius: 4px; }
+  #apercu.template-epure, #apercu.template-epure * { color: #1F1F1D !important; }
+  #apercu.template-epure > div:nth-child(1) { border-bottom: 1px solid #DDDAD2 !important; }
+  #apercu.template-epure > div:nth-child(3) { border-bottom: 1px solid #EEEBE4 !important; }
+  #apercu.template-epure table thead tr { border-bottom: 1px solid #1F1F1D !important; }
+  #apercu.template-epure table td { border-bottom: 1px solid #EEEBE4 !important; }
+  #apercu.template-epure > div:nth-child(5) > div { border-top: 1px solid #1F1F1D !important; }
+  #apercu.template-epure #logoContainer { background-color: transparent !important; border: 1px solid #DDDAD2 !important; }
+  #apercu.template-epure #totalTTC { color: #1F1F1D !important; }
+
+  #apercu.template-moderne { border-radius: 18px; overflow: hidden; }
+  #apercu.template-moderne > div:nth-child(1) {
+    background: linear-gradient(135deg, #2C5F63, #17393C) !important;
+    margin: -32px -32px 20px -32px !important;
+    padding: 28px 32px !important;
+    border-bottom: none !important;
+  }
+  #apercu.template-moderne > div:nth-child(1) * { color: #FFFFFF !important; }
+  #apercu.template-moderne > div:nth-child(1) #logoContainer { background-color: rgba(255,255,255,0.15) !important; }
+  #apercu.template-moderne table thead tr { border-bottom: 2px solid #2C5F63 !important; }
+  #apercu.template-moderne > div:nth-child(5) > div { border-top: 2px solid #2C5F63 !important; }
+  #apercu.template-moderne #totalTTC { color: #2C5F63 !important; }
+  #apercu.template-moderne > div:nth-child(3) p:first-child,
+  #apercu.template-moderne > div:nth-child(2) p[style*="8B6F47"] { color: #2C5F63 !important; }
+
+  #ctaAcceptation {
+    margin: 18px 0; padding: 14px 18px; border-radius: 8px; text-align: center;
+    border: 1.5px solid #8B6F47; background-color: #FDFBF9;
+  }
+  #ctaTexte { margin: 0; font-weight: 700; font-size: 13px; color: #5C4033; letter-spacing: 0.3px; }
+  #ctaSousTexte { margin: 6px 0 0; font-size: 10px; color: #7D5D3B; }
+  #apercu.template-epure #ctaAcceptation { border: 1px solid #1F1F1D !important; background: white !important; border-radius: 2px; }
+  #apercu.template-epure #ctaTexte { color: #1F1F1D !important; }
+  #apercu.template-moderne #ctaAcceptation { border: none !important; background: linear-gradient(135deg, #2C5F63, #17393C) !important; }
+  #apercu.template-moderne #ctaTexte, #apercu.template-moderne #ctaSousTexte { color: #FFFFFF !important; }
+
+  #apercu, #apercu * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+  #ecranAuth {
+    min-height: 100vh; display: flex;
+  }
+  .ecranAuthGrille { display: grid; grid-template-columns: 1.1fr 1fr; width: 100%; min-height: 100vh; }
+  @media (max-width: 820px) { .ecranAuthGrille { grid-template-columns: 1fr; } }
+
+  .panneauVitrine {
+    background: linear-gradient(165deg, #5C4033, #3E2A20);
+    color: #F1E9DC; padding: 52px 48px; display: flex; flex-direction: column; justify-content: space-between;
+  }
+  @media (max-width: 820px) { .panneauVitrine { padding: 36px 28px 44px; } }
+  .marqueAuth { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 600; }
+  .marqueAuth .copeauAuth { width: 9px; height: 20px; background: #C97C3D; border-radius: 2px 6px 2px 6px; flex-shrink: 0; }
+  .logo-devix-clair {
+    font-family: 'Roboto Slab', serif; font-weight: 700; letter-spacing: 0.5px;
+    color: #FBF3E7; font-size: 26px; display: flex; align-items: baseline; gap: 2px;
+  }
+  .logo-devix-clair .x { color: #E8944F; }
+  .logo-devix-sombre {
+    font-family: 'Roboto Slab', serif; font-weight: 700; letter-spacing: 0.5px;
+    color: #5C4033; font-size: 24px; display: flex; align-items: baseline; gap: 2px; margin-bottom: 8px;
+  }
+  .logo-devix-sombre .x { color: #B5651D; }
+  .accrocheVitrine { max-width: 30ch; }
+  .accrocheVitrine h2 { color: #FBF3E7; font-size: 26px; line-height: 1.28; font-weight: 600; margin: 0 0 12px; }
+  .accrocheVitrine p { color: #D8C6AE; font-size: 13.5px; line-height: 1.6; margin: 0; }
+  .pileDocuments { position: relative; height: 230px; width: 100%; max-width: 300px; }
+  .docAuth {
+    position: absolute; top: 0; left: 0; width: 100%;
+    background: #FDFBF9; border-radius: 10px; padding: 16px 16px 14px; font-size: 10.5px;
+    box-shadow: 0 14px 30px -12px rgba(0,0,0,0.45);
+  }
+  .docAuth .entete { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1.5px solid #8B6F47; padding-bottom: 7px; margin-bottom: 8px; }
+  .docAuth .titreDoc { font-weight: 700; color: #5C4033; font-size: 12px; letter-spacing: 0.3px; }
+  .docAuth .num { color: #8A7A64; font-size: 9px; margin-top: 2px; }
+  .docAuth .client { text-align: right; font-size: 9px; color: #8A7A64; }
+  .docAuth .client strong { display: block; color: #5C4033; font-size: 10.5px; }
+  .docAuth .ligneApercuAuth { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #EFE9DE; color: #4A3327; }
+  .docAuth .total { display: flex; justify-content: space-between; margin-top: 7px; padding-top: 7px; border-top: 1.5px solid #8B6F47; font-weight: 700; color: #5C4033; }
+  .docAuth .badge { position: absolute; top: -9px; right: 14px; font-size: 9px; font-weight: 700; padding: 3px 9px; border-radius: 10px; color: white; letter-spacing: 0.3px; }
+  .doc-devis { transform: rotate(-5deg) translate(0, 0); z-index: 3; }
+  .doc-devis .badge { background: #2C5F63; }
+  .doc-facture { transform: rotate(2deg) translate(26px, 34px); z-index: 2; }
+  .doc-facture .badge { background: #8B6F47; }
+  .doc-avoir { transform: rotate(-2deg) translate(52px, 68px); z-index: 1; }
+  .doc-avoir .badge { background: #A32D2D; }
+  @media (max-width: 820px) { .pileDocuments { display: none; } }
+
+  .panneauFormulaire { display: flex; align-items: center; justify-content: center; padding: 24px; background: #F5F1E8; }
+  #ecranAuth .carteAuth { width: 100%; max-width: 360px; }
+  #ecranAuth h1 { font-size: 22px; margin-bottom: 6px; }
+  #ecranAuth p.sousTitre { font-size: 13px; color: #7D5D3B; margin: 0 0 26px; line-height: 1.5; }
+  #ecranAuth label { display: block; margin: 14px 0 5px; }
+  #ecranAuth input { padding: 11px 13px; }
+  #ecranAuth input:focus { outline: none; border-color: #5C4033; box-shadow: 0 0 0 3px rgba(139,111,71,0.18); }
+  #ecranAuth .messageAuth { font-size: 12px; margin-top: 12px; min-height: 14px; }
+  #ecranAuth .messageAuth.erreur { color: #A32D2D; }
+  #ecranAuth .messageAuth.info { color: #2C5F63; }
+  #ecranAuth .lienBascule { background: none; border: none; color: #8B6F47; font-size: 12px; text-decoration: underline; cursor: pointer; padding: 0; margin-top: 20px; }
+  #barreCompte { display: flex; justify-content: flex-end; align-items: center; gap: 10px; max-width: 1400px; margin: 0 auto 12px; }
+  #barreCompte span { font-size: 11px; color: #7D5D3B; }
+  #barreCompte button { width: auto; padding: 6px 12px; font-size: 11px; }
+  @media print {
+    @page { margin: 12mm; }
+    body * { visibility: hidden; }
+    #apercu, #apercu * { visibility: visible; }
+    #apercu { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; padding: 0; border-radius: 0 !important; }
+    #apercu.template-moderne > div:nth-child(1) { margin: 0 0 20px 0 !important; padding: 20px 0 !important; border-radius: 0 !important; }
+    .no-print { display: none !important; }
+    body { background: white; padding: 0; margin: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div id="ecranAuth" style="display:none;">
+  <div class="ecranAuthGrille">
+    <div class="panneauVitrine">
+      <div class="marqueAuth"><span class="copeauAuth"></span> <span class="logo-devix-clair">DEV<span class="x">IX</span></span></div>
+      <div class="accrocheVitrine">
+        <h2>Tes devis et factures, prêts en quelques minutes.</h2>
+        <p>Mentions légales à jour, clients enregistrés, PDF identique partout — pensé pour les artisans, freelances et créateurs.</p>
+      </div>
+      <div class="pileDocuments">
+        <div class="docAuth doc-avoir">
+          <span class="badge">AVOIR</span>
+          <div class="entete">
+            <div><div class="titreDoc">AVOIR</div><div class="num">AV-2026-002</div></div>
+            <div class="client"><strong>Mme Lambert</strong>Corrige FAC-2026-011</div>
+          </div>
+          <div class="ligneApercuAuth"><span>Reprise pièce</span><span>-120,00€</span></div>
+          <div class="total"><span>Total TTC</span><span>-144,00€</span></div>
+        </div>
+        <div class="docAuth doc-facture">
+          <span class="badge">FACTURE</span>
+          <div class="entete">
+            <div><div class="titreDoc">FACTURE</div><div class="num">FAC-2026-011</div></div>
+            <div class="client"><strong>SCI Bellevue</strong>Prof. — SIREN 512...</div>
+          </div>
+          <div class="ligneApercuAuth"><span>Prestation graphisme</span><span>1 200,00€</span></div>
+          <div class="ligneApercuAuth"><span>Retouches</span><span>180,00€</span></div>
+          <div class="total"><span>Total TTC</span><span>1 656,00€</span></div>
+        </div>
+        <div class="docAuth doc-devis">
+          <span class="badge">DEVIS</span>
+          <div class="entete">
+            <div><div class="titreDoc">DEVIS</div><div class="num">DEV-2026-014</div></div>
+            <div class="client"><strong>M. Lefèvre</strong>3 semaines</div>
+          </div>
+          <div class="ligneApercuAuth"><span>Fournitures</span><span>675,00€</span></div>
+          <div class="ligneApercuAuth"><span>Main-d'œuvre</span><span>1 000,00€</span></div>
+          <div class="total"><span>Total TTC</span><span>2 826,00€</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="panneauFormulaire">
+      <div class="carteAuth">
+        <div class="logo-devix-sombre">DEV<span class="x">IX</span></div>
+        <h1>Générateur de Devis</h1>
+        <p class="sousTitre">Connecte-toi pour accéder à ton espace (tes infos et documents sont liés à ton compte).</p>
+        <form id="formulaireAuth">
+          <label>Adresse email</label>
+          <input type="email" id="authEmail" autocomplete="email" required />
+          <label>Mot de passe</label>
+          <input type="password" id="authMotDePasse" autocomplete="current-password" required minlength="6" />
+          <button type="submit" class="btn-principal" id="boutonAuth" style="margin-top:18px;">Se connecter</button>
+        </form>
+        <p class="messageAuth" id="messageAuth"></p>
+        <button type="button" class="lienBascule" id="basculeAuth">Pas encore de compte ? Créer un compte</button>
+        <button type="button" class="lienBascule" id="lienMotDePasseOublie" style="display:block; margin-top:8px;">Mot de passe oublié ?</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="ecranNouveauMotDePasse" style="display:none;">
+  <div class="panneauFormulaire" style="min-height:100vh;">
+    <div class="carteAuth">
+      <div class="logo-devix-sombre">DEV<span class="x">IX</span></div>
+      <h1>Nouveau mot de passe</h1>
+      <p class="sousTitre">Choisis un nouveau mot de passe pour ton compte.</p>
+      <form id="formulaireNouveauMotDePasse">
+        <label>Nouveau mot de passe</label>
+        <input type="password" id="nouveauMotDePasse" autocomplete="new-password" required minlength="6" />
+        <button type="submit" class="btn-principal" id="boutonNouveauMotDePasse" style="margin-top:18px;">Enregistrer le nouveau mot de passe</button>
+      </form>
+      <p class="messageAuth" id="messageNouveauMotDePasse"></p>
+    </div>
+  </div>
+</div>
+
+<div id="appPrincipale" style="display:none;">
+<div id="barreCompte">
+  <span id="emailCompteActif"></span>
+  <button type="button" class="btn-secondaire" onclick="seDeconnecter()">Se déconnecter</button>
+</div>
+<div class="conteneur">
+  <!-- FORMULAIRE -->
+  <div class="no-print">
+    <div style="border-left: 4px solid #8B6F47; padding-left: 16px; margin-bottom: 20px;">
+      <div class="logo-devix-sombre" style="font-size: 28px;">DEV<span class="x">IX</span></div>
+      <h1>Générateur de Devis</h1>
+      <p style="margin: 4px 0 0; font-size: 13px; color: #7D5D3B;">Conforme aux mentions légales obligatoires</p>
+      <p style="margin: 6px 0 0; font-size: 12px; color: #A32D2D;"><span class="oblig">*</span> Champ obligatoire pour un <strong>devis</strong> et/ou une <strong>facture</strong> conformes à la loi française (facture : depuis le 01/09/2026). La mention « (devis) » précise les champs propres au devis uniquement.</p>
+      <p style="margin: 6px 0 0; font-size: 10px; color: #7D5D3B;">Cet outil facilite la mise en conformité des devis et factures mais ne remplace pas l'avis d'un expert-comptable ou d'un avocat. Tu restes seul responsable de l'exactitude et de la conformité des documents que tu émets.</p>
+    </div>
+
+    <div class="bloc" id="blocBilan">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3>📊 Bilan (chiffre d'affaires encaissé HT)</h3>
+        <select id="bilanAnnee" style="width:auto; padding:4px 8px; font-size:11px;" onchange="afficherBilan()"></select>
+      </div>
+      <div style="display: flex; gap: 12px;">
+        <div style="flex:1; background:#FDFBF9; border:1px solid #E8E4DB; border-radius:6px; padding:10px; text-align:center;">
+          <p style="margin:0; font-size:10px; color:#7D5D3B;">Ce mois-ci</p>
+          <p id="bilanMoisMontant" style="margin:4px 0 0; font-size:20px; font-weight:700; color:#5C4033;">0,00 €</p>
+        </div>
+        <div style="flex:1; background:#FDFBF9; border:1px solid #E8E4DB; border-radius:6px; padding:10px; text-align:center;">
+          <p style="margin:0; font-size:10px; color:#7D5D3B;">Total année</p>
+          <p id="bilanAnneeMontant" style="margin:4px 0 0; font-size:20px; font-weight:700; color:#5C4033;">0,00 €</p>
+        </div>
+      </div>
+      <div id="bilanGraphique" style="display:flex; align-items:flex-end; gap:4px; height:110px; margin-top:8px; border-bottom:1.5px solid #8B6F47; padding-bottom:2px;"></div>
+      <p style="margin: 0; font-size: 10px; color: #7D5D3B;">💡 Montant HT à déclarer à l'URSSAF : basé sur les factures marquées « payée » dans ton archive, réparties par mois de paiement (les avoirs émis sont déduits sur leur mois d'émission).</p>
+    </div>
+
+    <div class="bloc">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3>Design du devis</h3>
+        <span style="font-size: 10px; color: #7D5D3B;">✓ Sauvegardé auto.</span>
+      </div>
+      <label>Modèle de mise en page</label>
+      <div style="display: flex; gap: 8px;">
+        <button type="button" class="choix-template" data-template="classique" onclick="choisirTemplate('classique')">Classique</button>
+        <button type="button" class="choix-template" data-template="epure" onclick="choisirTemplate('epure')">Épurée</button>
+        <button type="button" class="choix-template" data-template="moderne" onclick="choisirTemplate('moderne')">Moderne</button>
+      </div>
+      <label>Police d'écriture</label>
+      <select id="policeChoix" onchange="choisirPolice(this.value)">
+        <option value="'Inter', sans-serif">Inter (moderne, épurée)</option>
+        <option value="'Poppins', sans-serif">Poppins (moderne, arrondie)</option>
+        <option value="'Montserrat', sans-serif">Montserrat (moderne, géométrique)</option>
+        <option value="Georgia, serif">Georgia (classique)</option>
+        <option value="'Playfair Display', serif">Playfair Display (élégante)</option>
+        <option value="'Roboto Slab', serif">Roboto Slab (moderne, empattée)</option>
+      </select>
+    </div>
+
+    <div class="bloc">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3>Votre Entreprise</h3>
+        <span style="font-size: 10px; color: #7D5D3B;">✓ Sauvegardé auto.</span>
+      </div>
+      <div>
+        <label>Logo</label>
+        <div id="logoPreview" style="width: 80px; height: 80px; border: 2px dashed #8B6F47; border-radius: 6px; display: flex; align-items: center; justify-content: center; background-color: #FDFBF9; overflow: hidden; margin-top: 6px;">
+          <img id="logoImg" style="max-width: 100%; max-height: 100%; object-fit: contain; display: none;" />
+          <span id="logoPlaceholder" style="font-size: 11px; color: #7D5D3B; text-align: center;">Cliquez pour ajouter</span>
+        </div>
+        <input id="logoInput" type="file" accept="image/*" style="display: none;" />
+        <button class="btn-secondaire" style="margin-top: 8px;" onclick="document.getElementById('logoInput').click()">📎 Charger un logo</button>
+        <button class="btn-suppr" style="width: 100%; margin-top: 6px;" onclick="supprimerLogo()">✕ Supprimer le logo</button>
+      </div>
+      <label>Nom/Prénom ou raison sociale<span class="oblig">*</span></label>
+      <input id="nomEntreprise" type="text" placeholder="Nom/Prénom ou raison sociale" />
+      <input id="nomCommercial" type="text" placeholder="Nom commercial (si différent, optionnel)" />
+      <label>Forme juridique<span class="oblig">*</span></label>
+      <select id="statutJuridique">
+        <option value="EI">EI / Entrepreneur individuel</option>
+        <option value="Auto-entrepreneur">Auto-entrepreneur</option>
+        <option value="EURL">EURL</option>
+        <option value="SARL">SARL</option>
+        <option value="SAS">SAS</option>
+        <option value="SASU">SASU</option>
+        <option value="Autre">Autre</option>
+      </select>
+      <div id="champCapitalSocial" style="display:none;">
+        <label>Capital social<span class="oblig">*</span></label>
+        <input id="capitalSocial" type="text" placeholder="Ex : 1 000 €" style="margin-top:4px;" />
+        <p style="margin:4px 0 0; font-size:10px; color:#7D5D3B;">Obligatoire sur les documents commerciaux des sociétés (EURL, SARL, SAS, SASU).</p>
+      </div>
+      <label>Adresse du siège social<span class="oblig">*</span></label>
+      <input id="addrEntreprise" type="text" placeholder="Adresse du siège social" />
+      <input id="telEntreprise" type="tel" placeholder="Téléphone" />
+      <input id="emailEntreprise" type="email" placeholder="Email" />
+      <label>N° SIRET<span class="oblig">*</span></label>
+      <input id="siret" type="text" placeholder="14 chiffres" />
+      <label>RCS ou RM<span class="oblig">*</span></label>
+      <input id="rcsRm" type="text" placeholder="Ex: RCS Paris ou RM 75" />
+      <input id="codeNAF" type="text" placeholder="Code NAF / APE (ex: 16.29B)" />
+    </div>
+
+    <div class="bloc">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3>Coordonnées bancaires</h3>
+        <span style="font-size: 10px; color: #7D5D3B;">✓ Sauvegardé auto.</span>
+      </div>
+      <input id="banqueNom" type="text" placeholder="Nom de la banque" />
+      <input id="banqueIban" type="text" placeholder="IBAN" style="font-family: monospace; letter-spacing: 0.5px;" />
+      <input id="banqueBic" type="text" placeholder="BIC / SWIFT" style="font-family: monospace;" />
+      <p style="margin: 0; font-size: 10px; color: #7D5D3B;">Affichées automatiquement sur tes factures (pas sur les devis).</p>
+    </div>
+
+    <div class="bloc">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3>Assurances professionnelles</h3>
+        <span style="font-size: 10px; color: #7D5D3B;">✓ Sauvegardé auto.</span>
+      </div>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal; font-size: 13px; color: #5C4033;">
+        <input type="checkbox" id="assurancesActives" style="width: 16px; height: 16px; accent-color: #8B6F47;" />
+        Afficher mes assurances sur le devis/facture
+      </label>
+      <p style="margin: 0; font-size: 10px; color: #A32D2D;">⚠️ La mention de l'assurance décennale (assureur + zone de couverture) est obligatoire sur le devis dès que l'activité relève de travaux de construction/agencement du bâtiment (Art. L243-2 du Code des assurances). Vérifie avec ton assureur si ton activité est concernée.</p>
+      <div id="champsAssurances" style="display: none; flex-direction: column; gap: 8px;">
+        <label>Assurance responsabilité civile professionnelle</label>
+        <input id="rcProAssureur" type="text" placeholder="Nom de l'assureur" />
+        <label>Assurance décennale</label>
+        <input id="decennaleAssureur" type="text" placeholder="Nom de l'assureur" />
+        <input id="decennaleNumPolice" type="text" placeholder="N° de police" />
+        <input id="decennaleZone" type="text" placeholder="Zone de couverture géographique" />
+      </div>
+    </div>
+
+    <div class="bloc">
+      <h3>TVA</h3>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal; font-size: 13px; color: #5C4033;">
+        <input type="checkbox" id="franchiseTVA" style="width: 16px; height: 16px; accent-color: #8B6F47;" />
+        Franchise en base de TVA (auto-entrepreneur non assujetti)
+      </label>
+      <div id="tauxTVAContainer">
+        <label>Taux de TVA applicable<span class="oblig">*</span></label>
+        <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+          <input type="number" id="tauxTVA" value="20" min="0" max="100" step="0.1" style="width: 80px;" />
+          <span style="font-size: 13px; color: #5C4033;">%</span>
+        </div>
+        <label style="margin-top: 8px; display: block;">N° de TVA intracommunautaire *</label>
+        <input id="numTVAIntra" type="text" placeholder="FR XX XXXXXXXXX" style="margin-top: 4px;" />
+      </div>
+    </div>
+
+    <div class="bloc">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3>Type de document</h3>
+        <span style="font-size: 10px; color: #7D5D3B;">✓ Sauvegardé auto.</span>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button type="button" class="choix-template" data-doctype="devis" onclick="choisirTypeDocument('devis')">Devis</button>
+        <button type="button" class="choix-template" data-doctype="facture" onclick="choisirTypeDocument('facture')">Facture (devis accepté)</button>
+      </div>
+      <p style="margin: 0; font-size: 10px; color: #7D5D3B;">⚠️ La numérotation de facture est distincte de celle du devis, et strictement séquentielle. Ne pas vider le cache du navigateur entre deux factures.</p>
+      <div id="blocReferenceAvoir" style="display: none;">
+        <p style="margin: 8px 0 4px; font-size: 11px; font-weight: 600; color: #A32D2D;">📝 Mode Avoir</p>
+        <label>Facture corrigée par cet avoir</label>
+        <input id="avoirReference" type="text" readonly style="margin-top: 4px; background: #F5F1E8;" />
+        <p style="margin: 4px 0 0; font-size: 10px; color: #7D5D3B;">Les lignes reprises ci-dessous ont des montants négatifs. Ajuste-les si l'avoir n'est que partiel, avant de générer le document.</p>
+      </div>
+    </div>
+
+    <div class="bloc">
+      <h3>Paiement / acceptation en ligne</h3>
+      <label>Lien de paiement (Stripe Payment Link, PayPal.me...) — optionnel</label>
+      <input id="lienPaiement" type="url" placeholder="https://..." />
+      <p style="margin: 0; font-size: 10px; color: #7D5D3B;">Si renseigné, le bouton pointera vers ce vrai lien de paiement. Sinon, il ouvrira un email pré-rempli d'acceptation vers ton adresse.</p>
+    </div>
+
+    <div class="bloc">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <p style="margin: 0; font-size: 12px; color: #7D5D3B;" id="labelCompteur">Numérotation automatique</p>
+          <p id="compteurDevis" style="margin: 4px 0 0; font-size: 16px; font-weight: 600; color: #5C4033;">Devis n°1</p>
+        </div>
+        <button class="btn-secondaire" style="width: auto; padding: 6px 12px;" onclick="reinitialiserCompteur()">↻ Réinit.</button>
+      </div>
+    </div>
+
+    <div class="bloc">
+      <label>Numéro<span class="oblig">*</span></label>
+      <input id="numDevis" type="text" value="DEV-2026-001" placeholder="Numéro" oninput="mettreAJourNomFichierExport()" style="margin-top:4px;" />
+      <div>
+        <label>Date de rédaction<span class="oblig">*</span></label>
+        <input id="dateDevis" type="date" style="margin-top: 4px;" />
+      </div>
+      <div>
+        <label>Durée de validité de l'offre<span class="oblig">*</span> <span style="font-weight:400; color:#7D5D3B;">(devis)</span></label>
+        <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+          <input type="number" id="validiteJours" value="30" min="1" style="width: 80px;" />
+          <span style="font-size: 13px; color: #5C4033;">jours</span>
+        </div>
+      </div>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal; font-size: 13px; color: #5C4033;">
+        <input type="checkbox" id="devisGratuit" checked style="width: 16px; height: 16px; accent-color: #8B6F47;" />
+        Devis gratuit (décocher si payant)<span class="oblig">*</span> <span style="font-size:10px; color:#7D5D3B;">(devis)</span>
+      </label>
+    </div>
+
+    <div class="bloc" id="blocFacture" style="display: none;">
+      <h3>Mentions spécifiques à la facture</h3>
+      <div>
+        <label>Date de vente / d'exécution de la prestation</label>
+        <input id="dateVenteExecution" type="date" style="margin-top: 4px;" />
+        <p style="margin: 4px 0 0; font-size: 10px; color: #7D5D3B;">Affichée sur la facture seulement si différente de la date d'émission (mention obligatoire dans ce cas).</p>
+      </div>
+      <div>
+        <label>Délai de paiement<span class="oblig">*</span></label>
+        <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+          <input type="number" id="delaiPaiementJours" value="30" min="0" style="width: 80px;" />
+          <span style="font-size: 13px; color: #5C4033;">jours</span>
+        </div>
+      </div>
+      <div>
+        <label>Mode de règlement</label>
+        <select id="modeReglement" style="margin-top: 4px;">
+          <option value="Virement bancaire">Virement bancaire</option>
+          <option value="Carte bancaire (paiement en ligne)">Carte bancaire (paiement en ligne)</option>
+          <option value="Chèque">Chèque</option>
+          <option value="Espèces">Espèces</option>
+          <option value="Prélèvement">Prélèvement</option>
+        </select>
+      </div>
+      <div>
+        <label>Conditions d'escompte<span class="oblig">*</span></label>
+        <input id="escompteTexte" type="text" value="Pas d'escompte pour paiement anticipé" style="margin-top: 4px;" />
+      </div>
+      <div>
+        <label>Pénalités de retard<span class="oblig">*</span></label>
+        <input id="penalitesTexte" type="text" value="3 fois le taux d'intérêt légal en vigueur" style="margin-top: 4px;" />
+      </div>
+      <p style="margin: 0; font-size: 10px; color: #7D5D3B;">L'indemnité forfaitaire de 40€ pour frais de recouvrement (Art. L.441-10 C. com.) est ajoutée automatiquement.</p>
+      <hr style="border: none; border-top: 1px solid #E8E4DB; margin: 4px 0;" />
+      <p style="margin: 0; font-size: 10px; color: #7D5D3B; font-weight: 600;">Nouvelles mentions obligatoires (depuis le 01/09/2026)</p>
+      <label>Nature de l'opération<span class="oblig">*</span></label>
+      <select id="natureOperation">
+        <option value="services">Prestation de services</option>
+        <option value="biens">Livraison de biens</option>
+        <option value="mixte">Livraison de biens et prestations de services</option>
+      </select>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal; font-size: 13px; color: #5C4033;">
+        <input type="checkbox" id="tvaDebits" style="width: 16px; height: 16px; accent-color: #8B6F47;" />
+        Option pour le paiement de la TVA d'après les débits
+      </label>
+    </div>
+
+    <div class="bloc">
+      <h3>Client</h3>
+      <label>Client enregistré<span class="oblig">*</span></label>
+      <select id="clientSelect" onchange="selectionnerClient(this.value)">
+        <option value="">— Sélectionner un client —</option>
+        <option value="__nouveau__">+ Nouveau client</option>
+      </select>
+      <div id="actionsClientEnregistre" style="display:none; gap: 8px;">
+        <button type="button" class="btn-secondaire" style="width:auto; padding:6px 10px; font-size:11px;" onclick="ouvrirModalClient(clientsCache.find(c => c.id === clientSelectionneId))">✎ Modifier ce client</button>
+        <button type="button" class="btn-suppr" style="width:auto; padding:6px 10px; font-size:11px;" onclick="supprimerClientSelectionne()">🗑 Supprimer</button>
+      </div>
+      <p id="avertissementClient" style="margin: 0; font-size: 10px; color: #A32D2D; display:none;">Sélectionne ou crée un client avant d'archiver/envoyer ce document.</p>
+      <label>Nom et prénom<span class="oblig">*</span></label>
+      <input id="clientNom" type="text" value="M. Dupont" placeholder="Nom et prénom" />
+      <input id="clientContact" type="text" placeholder="À l'attention de (si contact différent, ex: entreprise cliente)" />
+      <label>Adresse<span class="oblig">*</span></label>
+      <input id="clientAddr" type="text" value="123 Rue de la Paix, 75000 Paris" placeholder="Adresse" />
+      <input id="clientTel" type="tel" value="06 12 34 56 78" placeholder="Téléphone" />
+      <input id="clientEmail" type="email" placeholder="Email du client" />
+      <label>Type de client</label>
+      <select id="clientType">
+        <option value="particulier">Particulier</option>
+        <option value="professionnel">Professionnel (entreprise)</option>
+      </select>
+      <div id="champSirenClient" style="display: none;">
+        <label>N° SIREN du client<span class="oblig">*</span> (obligatoire sur facture depuis le 01/09/2026, clients pro)</label>
+        <input id="clientSiren" type="text" placeholder="9 chiffres" style="margin-top: 4px;" />
+      </div>
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal; font-size: 13px; color: #5C4033;">
+        <input type="checkbox" id="livraisonDifferente" style="width: 16px; height: 16px; accent-color: #8B6F47;" />
+        Adresse de livraison différente de l'adresse client
+      </label>
+      <div id="champAdresseLivraison" style="display: none;">
+        <label>Adresse de livraison<span class="oblig">*</span></label>
+        <input id="clientAddrLivraison" type="text" placeholder="Adresse de livraison" style="margin-top:4px;" />
+      </div>
+    </div>
+
+    <div id="modalNouveauClient" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000; align-items: center; justify-content: center;">
+      <div style="background: #F9F8F5; border-top: 3px solid #8B6F47; border-radius: 8px; padding: 24px; width: 100%; max-width: 360px;">
+        <h3 id="titreModalClient" style="margin-bottom: 12px;">Nouveau client</h3>
+        <label>Nom et prénom<span class="oblig">*</span></label>
+        <input id="modalClientNom" type="text" placeholder="Nom et prénom" />
+        <label style="margin-top:8px; display:block;">Email</label>
+        <input id="modalClientEmail" type="email" placeholder="Email" />
+        <label style="margin-top:8px; display:block;">Téléphone</label>
+        <input id="modalClientTel" type="tel" placeholder="Téléphone" />
+        <label style="margin-top:8px; display:block;">Adresse</label>
+        <input id="modalClientAddr" type="text" placeholder="Adresse" />
+        <p id="messageModalClient" style="margin: 8px 0 0; font-size: 11px; color: #A32D2D; min-height: 14px;"></p>
+        <div style="display:flex; gap: 8px; margin-top: 16px;">
+          <button type="button" class="btn-secondaire" onclick="fermerModalNouveauClient()">Annuler</button>
+          <button type="button" class="btn-principal" id="boutonEnregistrerClient" onclick="enregistrerNouveauClient()">Enregistrer</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="bloc">
+      <h3>Projet</h3>
+      <textarea id="projetDesc" style="height: 70px; resize: none;">Meuble de rangement en chêne massif</textarea>
+      <div>
+        <label>Date de début estimée<span class="oblig">*</span> <span style="font-weight:400; color:#7D5D3B;">(devis)</span></label>
+        <input id="dateDebut" type="date" style="margin-top: 4px;" />
+      </div>
+      <label>Durée estimée des travaux<span class="oblig">*</span> <span style="font-weight:400; color:#7D5D3B;">(devis)</span></label>
+      <input id="projetDelai" type="text" value="3 semaines" placeholder="Ex : 3 semaines" style="margin-top: 4px;" />
+    </div>
+
+    <div class="bloc">
+      <h3>Prestations</h3>
+      <div id="lignesContainer" style="max-height: 350px; overflow-y: auto;"></div>
+      <button class="btn-secondaire" style="background-color: #8B6F47; color: white; border: none;" onclick="ajouterLigne()">+ Ajouter une ligne</button>
+      <p style="margin: 0; font-size: 10px; color: #7D5D3B;">💡 Sépare bien la main-d'œuvre et les fournitures (obligatoire pour les travaux du bâtiment).</p>
+    </div>
+
+    <div class="bloc">
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500; color: #5C4033; font-size: 14px;">
+        <input type="checkbox" id="remiseGlobaleActive" style="width: 16px; height: 16px; accent-color: #8B6F47;" />
+        Appliquer une remise globale (sur le total, pas ligne par ligne)
+      </label>
+      <p style="margin: 0; font-size: 10px; color: #7D5D3B;">Utile pour un geste commercial ponctuel (ex : petite malfaçon, geste de fidélité) sans avoir à modifier chaque ligne.</p>
+      <div id="remiseGlobaleChamps" style="display: none; flex-direction: column; gap: 8px;">
+        <label>Pourcentage de remise globale</label>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <input type="number" id="remiseGlobalePourcent" value="5" min="0" max="100" step="0.1" style="width: 80px;" />
+          <span style="font-size: 13px; color: #5C4033;">%</span>
+        </div>
+        <label>Motif (optionnel, apparaît sur le document)</label>
+        <input id="remiseGlobaleMotif" type="text" placeholder="Ex : geste commercial suite à réserve sur la finition" />
+      </div>
+    </div>
+
+    <div class="bloc">
+      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500; color: #5C4033; font-size: 14px;">
+        <input type="checkbox" id="acompteActif" style="width: 16px; height: 16px; accent-color: #8B6F47;" />
+        Inclure un acompte à la commande
+      </label>
+      <div id="acompteChamps" style="display: none; flex-direction: column; gap: 8px;">
+        <label>Pourcentage d'acompte</label>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <input type="number" id="acomptePourcent" value="30" min="0" max="100" style="width: 80px;" />
+          <span style="font-size: 13px; color: #5C4033;">%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="bloc">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3>Notes complémentaires</h3>
+        <span style="font-size: 10px; color: #7D5D3B;">✓ Sauvegardé auto.</span>
+      </div>
+      <textarea id="notes" style="height: 50px; resize: none;"></textarea>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:8px; margin: 24px 0 10px;">
+      <span style="background:#2C5F63; color:white; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0;">1</span>
+      <h3 style="margin:0; color:#2C5F63;">Génère le PDF</h3>
+    </div>
+    <button id="btnTelechargerDirect" class="btn-principal" style="background-color: #2C5F63;" onclick="telechargerPDFDirect()">⬇️ Télécharger le PDF (rendu identique partout)</button>
+    <p style="margin: 8px 0 0; font-size: 11px; color: #7D5D3B; text-align: center;">✓ Recommandé : le PDF est généré comme une image figée — il s'affichera exactement pareil sur Edge, Chrome, Firefox, Adobe Reader, mobile, etc. Le bouton « Accepter »/« Payer » reste cliquable même s'il fait partie de l'image.</p>
+
+    <button class="btn-secondaire" style="margin-top: 12px;" onclick="window.print()">🖨️ Solution de secours : Imprimer / Enregistrer en PDF</button>
+    <p style="margin: 8px 0 0; font-size: 11px; color: #7D5D3B; text-align: center;">Dans la fenêtre d'impression, choisis « Enregistrer au format PDF » comme destination. (Rendu qui peut varier légèrement selon le navigateur.)</p>
+
+    <div class="bloc" style="margin-top: 12px;">
+      <h3>📁 Export automatique vers un dossier</h3>
+      <p id="statutDossier" style="margin: 0; font-size: 11px; color: #7D5D3B;">Aucun dossier sélectionné.</p>
+      <p id="nomFichierExport" style="display: none; margin: 0; font-size: 12px; font-weight: 600; color: #5C4033;"></p>
+      <button class="btn-secondaire" onclick="choisirDossierExport()">📁 Choisir mon dossier PDF</button>
+      <button class="btn-principal" style="background-color: #2C5F63;" onclick="exporterPDFDossier()">💾 Exporter ce PDF dans le dossier</button>
+      <p id="avertissementDossier" style="margin: 0; font-size: 10px; color: #A32D2D; display: none;">⚠️ Ton navigateur ne supporte pas cette fonction (réservée à Chrome / Edge / Opera). Utilise plutôt le bouton "Imprimer / Enregistrer en PDF" ci-dessus et choisis ton dossier manuellement dans la fenêtre d'enregistrement.</p>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:8px; margin: 24px 0 10px;">
+      <span style="background:#8B6F47; color:white; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0;">2</span>
+      <h3 style="margin:0; color:#8B6F47;">Envoie-le au client</h3>
+    </div>
+    <label>Ouvrir l'email avec</label>
+    <select id="serviceMail">
+      <option value="defaut">Application mail par défaut</option>
+      <option value="gmail">Gmail (dans le navigateur)</option>
+      <option value="outlook">Outlook.com (dans le navigateur)</option>
+      <option value="yahoo">Yahoo Mail (dans le navigateur)</option>
+    </select>
+    <button class="btn-principal" style="background-color: #8B6F47; margin-top: 10px;" onclick="preparerEmailEnvoi()">📧 Envoyer par email (client + moi)</button>
+    <p style="margin: 8px 0 0; font-size: 11px; color: #7D5D3B; text-align: center;">Assure-toi d'avoir bien téléchargé le PDF à l'étape 1 : ce bouton ouvre ton logiciel de mail, adressé au client et à toi en copie — il ne te reste plus qu'à glisser le PDF enregistré en pièce jointe avant d'envoyer. Ce bouton archive automatiquement le document (pas besoin d'utiliser aussi « Archiver ce document » dans ce cas).</p>
+
+    <button class="btn-secondaire" style="margin-top: 12px; border-color: #8B6F47; color: #8B6F47;" onclick="archiverManuel()">💾 Archiver ce document (si envoyé autrement)</button>
+    <p style="margin: 8px 0 0; font-size: 11px; color: #7D5D3B; text-align: center;">À utiliser quand tu envoies le PDF toi-même (Outlook, remis en main propre...) au lieu du bouton « Envoyer par email » ci-dessus : ça enregistre quand même le document dans ton archive locale, tes sauvegardes, et le protège contre un doublon de numéro.</p>
+
+    <div class="bloc" style="margin-top: 20px;">
+      <h3>🔔 Relance client (devis sans réponse)</h3>
+      <label>Relancer si aucune réponse après</label>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <input type="number" id="relanceDelaiJours" value="7" min="1" style="width: 80px;" />
+        <span style="font-size: 13px; color: #5C4033;">jours</span>
+      </div>
+      <p style="margin: 0; font-size: 10px; color: #7D5D3B;">⚠️ Détection uniquement à l'ouverture de cet outil (pas d'envoi en arrière-plan possible sans serveur). Ouvre l'outil régulièrement pour ne rater aucune relance.</p>
+      <div id="banniereRelances" style="display: none; flex-direction: column; gap: 8px; margin-top: 8px;"></div>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:8px; margin: 24px 0 10px;">
+      <span style="background:#A32D2D; color:white; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0;">3</span>
+      <h3 style="margin:0; color:#A32D2D;">Sauvegarde tes données</h3>
+    </div>
+    <div class="bloc" style="border-top-color: #A32D2D;">
+      <h3>🛡️ Sauvegarde de mes données</h3>
+      <p style="margin: 0; font-size: 10px; color: #A32D2D;">⚠️ Toutes tes données (entreprise, archive des devis/factures) sont stockées uniquement dans ce navigateur. Vider le cache, changer d'ordinateur ou désinstaller le navigateur les efface définitivement — or la loi impose de conserver tes factures 10 ans. Exporte une sauvegarde régulièrement et garde-la ailleurs (disque, cloud).</p>
+
+      <button class="btn-secondaire" onclick="choisirDossierSauvegarde()">📁 Choisir mon dossier de sauvegarde</button>
+      <p id="statutDossierSauvegarde" style="margin: 0; font-size: 11px; color: #7D5D3B;">Aucun dossier sélectionné — l'export utilisera le téléchargement classique du navigateur.</p>
+      <p id="avertissementDossierSauvegarde" style="margin: 0; font-size: 10px; color: #A32D2D; display: none;">⚠️ Ton navigateur ne supporte pas cette fonction (réservée à Chrome / Edge / Opera). Utilise le téléchargement classique ci-dessous.</p>
+
+      <label style="margin-top: 6px;">Nom du fichier (optionnel)</label>
+      <input id="nomSauvegardePersonnalise" type="text" placeholder="Ex : sauvegarde-atelier-bois" style="margin-top: 4px;" />
+      <p style="margin: 2px 0 0; font-size: 10px; color: #7D5D3B;">La date d'export (AAAA-MM-JJ) et l'extension .json sont toujours ajoutées automatiquement si absentes, pour garder des sauvegardes datées et exploitables.</p>
+      <button class="btn-principal" style="background-color: #A32D2D; margin-top: 8px;" onclick="exporterSauvegardeJSON()">⬇️ Exporter une sauvegarde complète (JSON)</button>
+
+      <div id="blocFichiersDossierSauvegarde" style="display: none; flex-direction: column; gap: 6px; margin-top: 8px;">
+        <p style="margin: 0; font-size: 11px; font-weight: 600; color: #5C4033;">Sauvegardes trouvées dans le dossier choisi :</p>
+        <div id="listeFichiersSauvegarde" style="display: flex; flex-direction: column; gap: 6px;"></div>
+      </div>
+
+      <button class="btn-secondaire" style="margin-top: 8px;" onclick="try { document.getElementById('importSauvegardeInput').click(); } catch (err) { alert('Impossible d\'ouvrir le sélecteur de fichier : ' + err.message); }">⬆️ Restaurer une sauvegarde (autre fichier)</button>
+      <input id="importSauvegardeInput" type="file" accept=".json,application/json" style="display: none;" />
+      <p id="statutImportSauvegarde" style="margin: 0; font-size: 11px; font-weight: 600; color: #A32D2D; display: none;"></p>
+      <p style="margin: 0; font-size: 10px; color: #7D5D3B;">La restauration remplace les données actuelles de ce navigateur par celles du fichier importé.</p>
+
+      <button type="button" class="btn-secondaire" style="margin-top: 8px;" onclick="basculerImportManuel()">📋 Le sélecteur de fichier ne fonctionne pas ? Restaurer par copier-coller</button>
+      <div id="blocImportManuel" style="display: none; flex-direction: column; gap: 8px; margin-top: 8px;">
+        <p style="margin: 0; font-size: 10px; color: #7D5D3B;">Ouvre ton fichier de sauvegarde .json avec le Bloc-notes (ou tout éditeur de texte), sélectionne tout son contenu (Ctrl+A puis Ctrl+C), colle-le ci-dessous, puis clique sur Restaurer.</p>
+        <textarea id="texteImportManuel" style="height: 100px; font-family: monospace; font-size: 10px;" placeholder='{"outil": "Générateur de Devis", "donnees": {...}}'></textarea>
+        <button type="button" class="btn-principal" style="background-color: #A32D2D;" onclick="restaurerDepuisTexte()">Restaurer à partir de ce texte</button>
+      </div>
+    </div>
+
+    <div class="bloc" style="margin-top: 20px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3>📁 Archive des envois</h3>
+        <button class="btn-secondaire" style="width: auto; padding: 6px 12px;" onclick="basculerArchive()">Voir / Masquer</button>
+      </div>
+      <p style="margin: 0; font-size: 10px; color: #7D5D3B;">Chaque devis/facture est archivé automatiquement ici dès que tu cliques sur « Envoyer par email ».</p>
+      <div id="listeArchive" style="display: none; max-height: 320px; overflow-y: auto; flex-direction: column; gap: 8px;"></div>
+    </div>
+  </div>
+
+  <!-- APERÇU -->
+  <div>
+    <div id="apercu" class="template-classique">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 2px solid #8B6F47;">
+        <div style="display: flex; gap: 14px; flex: 1;">
+          <div id="logoContainer" style="width: 70px; height: 70px; border-radius: 6px; background-color: #FDFBF9; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;">
+            <img id="logoPDF" style="max-width: 100%; max-height: 100%; object-fit: contain; display: none;" />
+            <span id="logoTextPDF" style="font-size: 10px; color: #7D5D3B; text-align: center;">Logo</span>
+          </div>
+          <div>
+            <p id="nomEntApercu" style="margin: 0; font-weight: 600; font-size: 15px; color: #5C4033;">Votre entreprise</p>
+            <p id="nomCommercialApercu" style="margin: 0; font-size: 11px; color: #7D5D3B; font-style: italic;"></p>
+            <p id="statutApercu" style="margin: 2px 0; font-size: 10.5px; color: #7D5D3B;"></p>
+            <p id="capitalApercu" style="margin: 2px 0; font-size: 10.5px; color: #7D5D3B;"></p>
+            <p id="addrEntApercu" style="margin: 2px 0; font-size: 10.5px; color: #7D5D3B;"></p>
+            <p id="telEntApercu" style="margin: 2px 0; font-size: 10.5px; color: #7D5D3B;"></p>
+            <p id="emailEntApercu" style="margin: 2px 0; font-size: 10.5px; color: #7D5D3B;"></p>
+            <p id="siretApercu" style="margin: 2px 0; font-size: 10.5px; color: #7D5D3B;"></p>
+            <p id="rcsApercu" style="margin: 2px 0; font-size: 10.5px; color: #7D5D3B;"></p>
+            <p id="nafApercu" style="margin: 2px 0; font-size: 10.5px; color: #7D5D3B;"></p>
+            <p id="tvaIntraApercu" style="margin: 2px 0; font-size: 10.5px; color: #7D5D3B;"></p>
+          </div>
+        </div>
+        <div style="text-align: right; flex-shrink: 0;">
+          <p id="titreDoc" style="margin: 0; font-size: 19px; font-weight: 600; color: #5C4033;">DEVIS</p>
+          <p id="numApercu" style="margin: 4px 0 0; font-size: 11px; color: #7D5D3B;"></p>
+          <p id="referenceAvoirApercu" style="margin: 4px 0 0; font-size: 10.5px; color: #A32D2D; font-weight: 600;"></p>
+          <p id="gratuitApercu" style="margin: 4px 0 0; font-size: 10.5px; color: #7D5D3B; font-style: italic;"></p>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 16px;">
+        <div>
+          <p style="margin: 0; font-size: 10px; font-weight: 600; color: #8B6F47; letter-spacing: 0.5px;">CLIENT</p>
+          <p id="contactApercu" style="margin: 4px 0 0; font-size: 11px; color: #7D5D3B;"></p>
+          <p id="clientApercu" style="margin: 2px 0 0; font-weight: 600; color: #5C4033; font-size: 13px;"></p>
+          <p id="addrApercu" style="margin: 2px 0; font-size: 11px; color: #7D5D3B;"></p>
+          <p id="telApercu" style="margin: 0; font-size: 11px; color: #7D5D3B;"></p>
+          <p id="sirenClientApercu" style="margin: 2px 0; font-size: 10.5px; color: #7D5D3B;"></p>
+          <p id="livraisonApercu" style="margin: 2px 0; font-size: 10.5px; color: #7D5D3B;"></p>
+        </div>
+        <div style="text-align: right;">
+          <p style="margin: 0; font-size: 10px; font-weight: 600; color: #8B6F47; letter-spacing: 0.5px;">DATE DE RÉDACTION</p>
+          <p id="dateApercu" style="margin: 4px 0 0; font-weight: 600; color: #5C4033; font-size: 12px;"></p>
+          <p id="validiteApercu" style="margin: 2px 0 0; font-size: 10.5px; color: #7D5D3B;"></p>
+          <p id="dateVenteApercu" style="margin: 2px 0 0; font-size: 10.5px; color: #7D5D3B;"></p>
+          <p style="margin-top: 8px; font-size: 10px; font-weight: 600; color: #8B6F47; letter-spacing: 0.5px;">DÉBUT / DURÉE PRESTATION</p>
+          <p id="debutApercu" style="margin: 2px 0 0; font-size: 11px; color: #5C4033;"></p>
+          <p id="delaiApercu" style="margin: 2px 0 0; font-weight: 600; color: #5C4033; font-size: 12px;"></p>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #E8E4DB;">
+        <p style="margin: 0 0 6px; font-size: 10px; font-weight: 600; color: #8B6F47; letter-spacing: 0.5px;">PROJET</p>
+        <p id="projApercu" style="margin: 0; color: #5C4033; font-size: 12px;"></p>
+      </div>
+
+      <table>
+        <thead>
+          <tr style="border-bottom: 2px solid #8B6F47;">
+            <th>Description</th>
+            <th style="text-align: center;">Qté</th>
+            <th style="text-align: center;">Unité</th>
+            <th style="text-align: right;">P.U. HT</th>
+            <th style="text-align: right;">Total HT</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+
+      <div style="display: flex; justify-content: flex-end; margin: 16px 0; padding-top: 12px; border-top: 2px solid #8B6F47;">
+        <div style="width: 230px;">
+          <div id="ligneBrutRemise" style="display: none; flex-direction: column; margin-bottom: 5px;">
+            <div style="display: flex; justify-content: space-between; color: #5C4033; font-size: 12px;">
+              <span>Total Brut HT</span>
+              <span id="totalBrutHT" style="font-weight: 600;"></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; color: #A32D2D; font-size: 12px;">
+              <span id="labelRemiseGlobale">Remise</span>
+              <span id="montantRemiseGlobale" style="font-weight: 600;"></span>
+            </div>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 5px; color: #5C4033; font-size: 12px;">
+            <span id="labelTotalHT">Total HT</span>
+            <span id="totalHT" style="font-weight: 600;"></span>
+          </div>
+          <div id="ligneRemiseGlobaleManuelle" style="display: none; justify-content: space-between; margin-bottom: 5px; color: #A32D2D; font-size: 12px;">
+            <span id="labelRemiseGlobaleManuelle"></span>
+            <span id="montantRemiseGlobaleManuelle" style="font-weight: 600;"></span>
+          </div>
+          <div id="ligneTotalApresRemiseGlobale" style="display: none; justify-content: space-between; margin-bottom: 5px; color: #5C4033; font-size: 12px; font-weight: 600;">
+            <span>Total HT après remise globale</span>
+            <span id="totalApresRemiseGlobale"></span>
+          </div>
+          <div id="ligneTVA" style="display: flex; justify-content: space-between; margin-bottom: 5px; color: #5C4033; font-size: 12px;">
+            <span id="labelTVA"></span>
+            <span id="totalTVA" style="font-weight: 600;"></span>
+          </div>
+          <p id="mentionFranchise" style="display: none; margin: 0 0 5px; font-size: 10px; color: #7D5D3B; font-style: italic;">TVA non applicable, art. 293 B du CGI</p>
+          <div style="display: flex; justify-content: space-between; font-size: 13px; color: #5C4033; padding-bottom: 5px;">
+            <span style="font-weight: 600;">Total TTC</span>
+            <span id="totalTTC" style="font-weight: 600; color: #8B6F47;"></span>
+          </div>
+          <div id="ligneAcompteApercu" style="display: none; flex-direction: column; gap: 5px; margin-top: 5px; padding-top: 8px; border-top: 1px dashed #D3D1C7;">
+            <div style="display: flex; justify-content: space-between; color: #5C4033; font-size: 11px;">
+              <span id="labelAcompte"></span>
+              <span id="montantAcompte" style="font-weight: 600;"></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; color: #5C4033; font-size: 11px;">
+              <span>Solde restant dû</span>
+              <span id="soldeRestant" style="font-weight: 600;"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="conditionsReglement" style="display: none; font-size: 10.5px; color: #7D5D3B; border-top: 1px solid #E8E4DB; padding-top: 10px; margin-bottom: 16px;">
+        <p style="margin: 0 0 3px; font-weight: 600; color: #5C4033;">Conditions de règlement</p>
+        <p id="modeReglementApercu" style="margin: 2px 0;"></p>
+        <p id="echeanceApercu" style="margin: 2px 0;"></p>
+        <p id="escompteApercu" style="margin: 2px 0;"></p>
+        <p id="penalitesApercu" style="margin: 2px 0;"></p>
+        <p style="margin: 2px 0;">Indemnité forfaitaire de recouvrement : 40,00€ (Art. L.441-10 du Code de commerce)</p>
+        <p id="natureOpApercu" style="margin: 2px 0;"></p>
+        <p id="tvaDebitsApercu" style="margin: 2px 0; display: none;">Option pour le paiement de la taxe d'après les débits</p>
+        <p id="coordBancairesApercu" style="margin: 8px 0 0; font-weight: 600; color: #5C4033;"></p>
+        <p id="ibanApercu" style="margin: 2px 0; font-family: monospace;"></p>
+        <p id="bicApercu" style="margin: 2px 0; font-family: monospace;"></p>
+      </div>
+
+      <div id="assurancesBloc" style="font-size: 10.5px; color: #7D5D3B; border-top: 1px solid #E8E4DB; padding-top: 10px; margin-bottom: 16px; display: none;">
+        <p style="margin: 0 0 3px; font-weight: 600; color: #5C4033;">Assurances professionnelles</p>
+        <p id="rcProApercu" style="margin: 2px 0;"></p>
+        <p id="decennaleApercu" style="margin: 2px 0;"></p>
+      </div>
+
+      <a id="ctaLien" href="#" style="text-decoration: none; display: block;">
+        <div id="ctaAcceptation">
+          <p id="ctaTexte">✓ Accepter et Signer</p>
+          <p id="ctaSousTexte">Faire précéder la signature de la mention manuscrite « Bon pour accord »</p>
+        </div>
+      </a>
+
+      <div id="notesBloc" style="font-size: 10.5px; color: #7D5D3B; border-top: 1px solid #E8E4DB; padding-top: 10px; display: none;">
+        <p style="margin: 0 0 3px; font-weight: 600;">Notes</p>
+        <p id="notesApercu" style="margin: 0;"></p>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<!-- /appPrincipale -->
+
+<script>
+const SUPABASE_URL = 'https://vddpfgycbjnhhatsaxde.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkZHBmZ3ljYmpuaGhhdHNheGRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5NjA3NTQsImV4cCI6MjEwNDUzNjc1NH0.K201juuy23ZpDHvdhdzhWfMbqmImEinSxhZgYbvEqWQ';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let entrepriseId = null;
+let modeAuth = 'connexion';
+
+let clientsCache = [];
+let clientSelectionneId = null;
+
+async function chargerClients() {
+  if (!entrepriseId) { clientsCache = []; remplirDropdownClients(); return; }
+  const { data, error } = await sb.from('clients').select('*').eq('entreprise_id', entrepriseId).order('nom');
+  if (error) { console.error('Chargement clients impossible :', error.message); return; }
+  clientsCache = data || [];
+  remplirDropdownClients();
+}
+
+function remplirDropdownClients() {
+  const select = document.getElementById('clientSelect');
+  const valeurActuelle = select.value;
+  select.innerHTML = '<option value="">— Sélectionner un client —</option>' +
+    clientsCache.map(c => `<option value="${c.id}">${echapperHTML(c.nom)}</option>`).join('') +
+    '<option value="__nouveau__">+ Nouveau client</option>';
+  if (valeurActuelle && clientsCache.some(c => c.id === valeurActuelle)) select.value = valeurActuelle;
+}
+
+function selectionnerClient(valeur) {
+  if (valeur === '__nouveau__') {
+    ouvrirModalClient(null);
+    document.getElementById('clientSelect').value = clientSelectionneId || '';
+    return;
+  }
+  if (!valeur) {
+    clientSelectionneId = null;
+    document.getElementById('avertissementClient').style.display = 'block';
+    document.getElementById('actionsClientEnregistre').style.display = 'none';
+    return;
+  }
+  const client = clientsCache.find(c => c.id === valeur);
+  if (!client) return;
+  clientSelectionneId = client.id;
+  document.getElementById('avertissementClient').style.display = 'none';
+  document.getElementById('actionsClientEnregistre').style.display = 'flex';
+  document.getElementById('clientNom').value = client.nom || '';
+  document.getElementById('clientEmail').value = client.email || '';
+  document.getElementById('clientTel').value = client.telephone || '';
+  document.getElementById('clientAddr').value = client.adresse || '';
+  mettreAJourApercu();
+}
+
+let clientEnEdition = null;
+
+function ouvrirModalClient(client) {
+  clientEnEdition = client || null;
+  document.getElementById('titreModalClient').textContent = client ? 'Modifier le client' : 'Nouveau client';
+  document.getElementById('boutonEnregistrerClient').textContent = client ? 'Enregistrer les modifications' : 'Enregistrer';
+  document.getElementById('modalClientNom').value = client ? (client.nom || '') : '';
+  document.getElementById('modalClientEmail').value = client ? (client.email || '') : '';
+  document.getElementById('modalClientTel').value = client ? (client.telephone || '') : '';
+  document.getElementById('modalClientAddr').value = client ? (client.adresse || '') : '';
+  document.getElementById('messageModalClient').textContent = '';
+  document.getElementById('modalNouveauClient').style.display = 'flex';
+  document.getElementById('modalClientNom').focus();
+}
+
+function fermerModalNouveauClient() {
+  document.getElementById('modalNouveauClient').style.display = 'none';
+  clientEnEdition = null;
+}
+
+async function enregistrerNouveauClient() {
+  const nom = document.getElementById('modalClientNom').value.trim();
+  if (!nom) {
+    document.getElementById('messageModalClient').textContent = 'Le nom est obligatoire.';
+    return;
+  }
+  if (!entrepriseId) {
+    document.getElementById('messageModalClient').textContent = 'Connexion en cours, réessaie dans un instant.';
+    return;
+  }
+  const donneesClient = {
+    nom: nom,
+    email: document.getElementById('modalClientEmail').value.trim(),
+    telephone: document.getElementById('modalClientTel').value.trim(),
+    adresse: document.getElementById('modalClientAddr').value.trim()
+  };
+
+  if (clientEnEdition) {
+    const { data, error } = await sb.from('clients').update(donneesClient).eq('id', clientEnEdition.id).select('*').single();
+    if (error) {
+      document.getElementById('messageModalClient').textContent = "Impossible d'enregistrer les modifications : " + error.message;
+      return;
+    }
+    const index = clientsCache.findIndex(c => c.id === data.id);
+    if (index !== -1) clientsCache[index] = data;
+    clientsCache.sort((a, b) => (a.nom || '').localeCompare(b.nom || ''));
+    remplirDropdownClients();
+    document.getElementById('clientSelect').value = data.id;
+    selectionnerClient(data.id);
+    fermerModalNouveauClient();
+    return;
+  }
+
+  const nouveauClient = { entreprise_id: entrepriseId, ...donneesClient };
+  const { data, error } = await sb.from('clients').insert(nouveauClient).select('*').single();
+  if (error) {
+    document.getElementById('messageModalClient').textContent = "Impossible d'enregistrer : " + error.message;
+    return;
+  }
+  clientsCache.push(data);
+  clientsCache.sort((a, b) => (a.nom || '').localeCompare(b.nom || ''));
+  remplirDropdownClients();
+  document.getElementById('clientSelect').value = data.id;
+  selectionnerClient(data.id);
+  fermerModalNouveauClient();
+}
+
+async function supprimerClientSelectionne() {
+  if (!clientSelectionneId) return;
+  const client = clientsCache.find(c => c.id === clientSelectionneId);
+  const nomAffiche = client ? client.nom : 'ce client';
+  if (!confirm(`Supprimer « ${nomAffiche} » de ta liste de clients ? Les devis/factures déjà archivés pour ce client resteront inchangés (conservation légale), seul le lien vers cette fiche client sera retiré.`)) return;
+  const { error } = await sb.from('clients').delete().eq('id', clientSelectionneId);
+  if (error) {
+    alert('Suppression impossible : ' + error.message);
+    return;
+  }
+  clientsCache = clientsCache.filter(c => c.id !== clientSelectionneId);
+  clientSelectionneId = null;
+  remplirDropdownClients();
+  document.getElementById('clientSelect').value = '';
+  document.getElementById('actionsClientEnregistre').style.display = 'none';
+  document.getElementById('avertissementClient').style.display = 'block';
+}
+
+function afficherMessageAuth(texte, type) {
+  const el = document.getElementById('messageAuth');
+  el.textContent = texte || '';
+  el.className = 'messageAuth' + (type ? ' ' + type : '');
+}
+
+document.getElementById('basculeAuth').addEventListener('click', function() {
+  modeAuth = modeAuth === 'connexion' ? 'inscription' : 'connexion';
+  document.getElementById('boutonAuth').textContent = modeAuth === 'connexion' ? 'Se connecter' : 'Créer mon compte';
+  this.textContent = modeAuth === 'connexion' ? 'Pas encore de compte ? Créer un compte' : 'Déjà un compte ? Se connecter';
+  afficherMessageAuth('', '');
+});
+
+document.getElementById('lienMotDePasseOublie').addEventListener('click', async function() {
+  const email = document.getElementById('authEmail').value.trim();
+  if (!email) {
+    afficherMessageAuth('Renseigne ton email ci-dessus, puis clique à nouveau sur « Mot de passe oublié ? ».', 'erreur');
+    return;
+  }
+  this.disabled = true;
+  afficherMessageAuth('Envoi en cours...', 'info');
+  try {
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.href.split('#')[0] });
+    if (error) throw error;
+    afficherMessageAuth('Email envoyé ! Clique sur le lien reçu pour choisir un nouveau mot de passe (vérifie aussi tes spams).', 'info');
+  } catch (err) {
+    afficherMessageAuth(traduireErreurAuth(err), 'erreur');
+  } finally {
+    this.disabled = false;
+  }
+});
+
+document.getElementById('formulaireAuth').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const email = document.getElementById('authEmail').value.trim();
+  const motDePasse = document.getElementById('authMotDePasse').value;
+  const bouton = document.getElementById('boutonAuth');
+  bouton.disabled = true;
+  afficherMessageAuth('', '');
+  try {
+    if (modeAuth === 'inscription') {
+      const { error: erreurInscription } = await sb.auth.signUp({ email, password: motDePasse });
+      if (erreurInscription) throw erreurInscription;
+    }
+    const { error: erreurConnexion } = await sb.auth.signInWithPassword({ email, password: motDePasse });
+    if (erreurConnexion) throw erreurConnexion;
+  } catch (err) {
+    afficherMessageAuth(traduireErreurAuth(err), 'erreur');
+  } finally {
+    bouton.disabled = false;
+  }
+});
+
+function traduireErreurAuth(err) {
+  const m = (err && err.message) || '';
+  if (m.includes('Invalid login credentials')) return 'Email ou mot de passe incorrect.';
+  if (m.includes('User already registered')) return 'Un compte existe déjà avec cet email — connecte-toi plutôt.';
+  if (m.includes('Password should be')) return 'Mot de passe trop court (6 caractères minimum).';
+  return m || 'Une erreur est survenue.';
+}
+
+async function seDeconnecter() {
+  await sb.auth.signOut();
+}
+
+document.getElementById('formulaireNouveauMotDePasse').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const nouveauMotDePasse = document.getElementById('nouveauMotDePasse').value;
+  const bouton = document.getElementById('boutonNouveauMotDePasse');
+  const messageEl = document.getElementById('messageNouveauMotDePasse');
+  bouton.disabled = true;
+  messageEl.className = 'messageAuth';
+  messageEl.textContent = '';
+  try {
+    const { error } = await sb.auth.updateUser({ password: nouveauMotDePasse });
+    if (error) throw error;
+    messageEl.className = 'messageAuth info';
+    messageEl.textContent = 'Mot de passe mis à jour ! Redirection...';
+    setTimeout(() => location.reload(), 1200);
+  } catch (err) {
+    messageEl.className = 'messageAuth erreur';
+    messageEl.textContent = traduireErreurAuth(err);
+    bouton.disabled = false;
+  }
+});
+
+async function assurerEntreprise(userId) {
+  const { data, error } = await sb.from('entreprises')
+    .upsert({ user_id: userId }, { onConflict: 'user_id', ignoreDuplicates: false })
+    .select('*')
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+sb.auth.onAuthStateChange(async (evenement, session) => {
+  if (evenement === 'PASSWORD_RECOVERY') {
+    document.getElementById('ecranAuth').style.display = 'none';
+    document.getElementById('appPrincipale').style.display = 'none';
+    document.getElementById('ecranNouveauMotDePasse').style.display = 'block';
+    return;
+  }
+  if (session && session.user) {
+    document.getElementById('ecranAuth').style.display = 'none';
+    try {
+      const entreprise = await assurerEntreprise(session.user.id);
+      entrepriseId = entreprise.id;
+      document.getElementById('emailCompteActif').textContent = session.user.email;
+      document.getElementById('appPrincipale').style.display = 'block';
+      await demarrerApplication(entreprise);
+    } catch (err) {
+      document.getElementById('appPrincipale').style.display = 'none';
+      document.getElementById('ecranAuth').style.display = 'flex';
+      afficherMessageAuth("Impossible de charger ton espace : " + (err.message || err), 'erreur');
+    }
+  } else {
+    document.getElementById('appPrincipale').style.display = 'none';
+    document.getElementById('ecranAuth').style.display = 'flex';
+    entrepriseId = null;
+  }
+});
+
+const CHAMPS_ENTREPRISE = ['nomEntreprise', 'nomCommercial', 'statutJuridique', 'capitalSocial', 'addrEntreprise', 'telEntreprise', 'emailEntreprise', 'siret', 'rcsRm', 'codeNAF', 'lienPaiement', 'delaiPaiementJours', 'escompteTexte', 'penalitesTexte', 'banqueNom', 'banqueIban', 'banqueBic', 'relanceDelaiJours', 'numTVAIntra', 'modeReglement', 'rcProAssureur', 'decennaleAssureur', 'decennaleNumPolice', 'decennaleZone'];
+const FORMES_AVEC_CAPITAL = ['EURL', 'SARL', 'SAS', 'SASU'];
+const OPTIONS_UNITES = ['h','jour','kg','forfait','m','m²','m³','ml','km','unité','pièce','lot','sachet','kit','L'];
+
+function echapperHTML(valeur) {
+  const div = document.createElement('div');
+  div.textContent = valeur ?? '';
+  return div.innerHTML;
+}
+function echapperAttribut(valeur) {
+  return String(valeur ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function optionsUnitesHTML(selection) {
+  return OPTIONS_UNITES.map(u => `<option value="${u}"${u===selection?' selected':''}>${u}</option>`).join('');
+}
+
+function creerLigneHTML(desc, qte, unite, prix, remise) {
+  remise = remise || 0;
+  const div = document.createElement('div');
+  div.className = 'ligne';
+  div.innerHTML = `
+    <div style="display: flex; flex-direction: column; gap: 2px;">
+      <label>Description<span class="oblig">*</span></label>
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <input type="text" class="desc" value="${echapperAttribut(desc)}" placeholder="Description" style="flex: 1;" />
+        <button class="btn-suppr" style="margin-left: 8px; white-space: nowrap;">✕ Suppr.</button>
+      </div>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 8px;">
+      <div><label>Quantité<span class="oblig">*</span></label><input type="number" class="qte" value="${qte}" /></div>
+      <div><label>Unité<span class="oblig">*</span></label><select class="unite">${optionsUnitesHTML(unite)}</select></div>
+      <div><label>Prix unit. HT<span class="oblig">*</span></label><input type="number" class="prix" value="${prix}" step="0.01" /></div>
+    </div>
+    <div>
+      <label>Remise (%) — laisser à 0 si aucune</label>
+      <input type="number" class="remise" value="${remise}" min="0" max="100" step="0.1" style="margin-top: 4px;" />
+    </div>
+  `;
+  div.querySelector('.btn-suppr').addEventListener('click', function() { div.remove(); mettreAJourApercu(); });
+  div.querySelectorAll('input, select').forEach(el => el.addEventListener('input', mettreAJourApercu));
+  return div;
+}
+
+function ajouterLigne(desc = '', qte = 1, unite = 'h', prix = 0, remise = 0) {
+  document.getElementById('lignesContainer').appendChild(creerLigneHTML(desc, qte, unite, prix, remise));
+  mettreAJourApercu();
+}
+
+const CORRESPONDANCE_CHAMPS_ENTREPRISE = {
+  nomEntreprise: 'nom',
+  nomCommercial: 'nom_commercial',
+  statutJuridique: 'statut_juridique',
+  capitalSocial: 'capital_social',
+  addrEntreprise: 'adresse',
+  telEntreprise: 'telephone',
+  emailEntreprise: 'email',
+  siret: 'siret',
+  rcsRm: 'rcs_rm',
+  codeNAF: 'code_naf',
+  numTVAIntra: 'tva_intracommunautaire',
+  banqueNom: 'banque',
+  banqueIban: 'iban',
+  banqueBic: 'bic',
+  rcProAssureur: 'rc_pro_assureur',
+  decennaleAssureur: 'decennale_assureur',
+  decennaleNumPolice: 'decennale_num_police',
+  decennaleZone: 'decennale_zone',
+  lienPaiement: 'lien_paiement',
+  delaiPaiementJours: 'delai_paiement_jours',
+  escompteTexte: 'escompte_texte',
+  penalitesTexte: 'penalites_texte',
+  relanceDelaiJours: 'relance_delai_jours',
+  modeReglement: 'mode_reglement',
+};
+const CHAMPS_ENTREPRISE_NUMERIQUES = new Set(['delaiPaiementJours', 'relanceDelaiJours']);
+let sauvegardeEntrepriseEnCours = null;
+
+function sauvegarderInfosEntreprise() {
+  CHAMPS_ENTREPRISE.forEach(id => {
+    if (!CORRESPONDANCE_CHAMPS_ENTREPRISE[id]) localStorage.setItem(id, document.getElementById(id).value);
+  });
+  if (!entrepriseId) return;
+  clearTimeout(sauvegardeEntrepriseEnCours);
+  sauvegardeEntrepriseEnCours = setTimeout(async () => {
+    const maj = {};
+    Object.entries(CORRESPONDANCE_CHAMPS_ENTREPRISE).forEach(([id, colonne]) => {
+      const brut = document.getElementById(id).value;
+      maj[colonne] = CHAMPS_ENTREPRISE_NUMERIQUES.has(id) ? (parseInt(brut, 10) || 0) : brut;
+    });
+    const { error } = await sb.from('entreprises').update(maj).eq('id', entrepriseId);
+    if (error) console.error('Sauvegarde entreprise impossible :', error.message);
+  }, 700);
+}
+function chargerInfosEntreprise(entreprise) {
+  CHAMPS_ENTREPRISE.forEach(id => {
+    if (CORRESPONDANCE_CHAMPS_ENTREPRISE[id]) return;
+    const v = localStorage.getItem(id);
+    if (v) document.getElementById(id).value = v;
+  });
+  if (entreprise) {
+    Object.entries(CORRESPONDANCE_CHAMPS_ENTREPRISE).forEach(([id, colonne]) => {
+      const v = entreprise[colonne];
+      if (v !== null && v !== undefined && v !== '') document.getElementById(id).value = v;
+    });
+  }
+  chargerLogo();
+  chargerNotes();
+  document.getElementById('champCapitalSocial').style.display = FORMES_AVEC_CAPITAL.includes(document.getElementById('statutJuridique').value) ? 'block' : 'none';
+  chargerAssurances();
+}
+function sauvegarderNotes() { localStorage.setItem('notesDevis', document.getElementById('notes').value); }
+function chargerNotes() {
+  const n = localStorage.getItem('notesDevis');
+  if (n) document.getElementById('notes').value = n;
+}
+
+document.getElementById('logoInput').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      localStorage.setItem('logoData', ev.target.result);
+      afficherLogo(ev.target.result);
+      mettreAJourApercu();
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+function afficherLogo(data) {
+  document.getElementById('logoImg').src = data;
+  document.getElementById('logoImg').style.display = 'block';
+  document.getElementById('logoPlaceholder').style.display = 'none';
+  document.getElementById('logoPDF').src = data;
+  document.getElementById('logoPDF').style.display = 'block';
+  document.getElementById('logoTextPDF').style.display = 'none';
+}
+function supprimerLogo() {
+  localStorage.removeItem('logoData');
+  document.getElementById('logoImg').style.display = 'none';
+  document.getElementById('logoImg').src = '';
+  document.getElementById('logoPlaceholder').style.display = 'block';
+  document.getElementById('logoPDF').style.display = 'none';
+  document.getElementById('logoPDF').src = '';
+  document.getElementById('logoTextPDF').style.display = 'block';
+  mettreAJourApercu();
+}
+function chargerLogo() {
+  const d = localStorage.getItem('logoData');
+  if (d) afficherLogo(d);
+}
+
+function choisirTemplate(t) {
+  const apercu = document.getElementById('apercu');
+  apercu.classList.remove('template-classique', 'template-epure', 'template-moderne');
+  apercu.classList.add('template-' + t);
+  document.querySelectorAll('[data-template]').forEach(b => b.classList.toggle('actif', b.dataset.template === t));
+  localStorage.setItem('designTemplate', t);
+}
+function choisirPolice(f) {
+  document.getElementById('apercu').style.fontFamily = f;
+  localStorage.setItem('designPolice', f);
+}
+function chargerDesign() {
+  const template = localStorage.getItem('designTemplate') || 'classique';
+  choisirTemplate(template);
+  const police = localStorage.getItem('designPolice');
+  if (police) {
+    document.getElementById('policeChoix').value = police;
+    choisirPolice(police);
+  }
+}
+
+let typeDocumentActuel = 'devis';
+
+function cleCompteur() {
+  if (typeDocumentActuel === 'facture') return 'factureCompteur';
+  if (typeDocumentActuel === 'avoir') return 'avoirCompteur';
+  return 'devisCompteur';
+}
+function prefixeDoc() {
+  if (typeDocumentActuel === 'facture') return 'FAC';
+  if (typeDocumentActuel === 'avoir') return 'AV';
+  return 'DEV';
+}
+
+function choisirTypeDocument(type) {
+  typeDocumentActuel = type;
+  document.querySelectorAll('[data-doctype]').forEach(b => b.classList.toggle('actif', b.dataset.doctype === type));
+  document.getElementById('blocFacture').style.display = (type === 'facture' || type === 'avoir') ? 'flex' : 'none';
+  document.getElementById('blocReferenceAvoir').style.display = type === 'avoir' ? 'block' : 'none';
+  localStorage.setItem('typeDocumentActuel', type);
+  afficherCompteur();
+}
+
+function initialiserCompteur() {
+  if (!localStorage.getItem('devisCompteur')) localStorage.setItem('devisCompteur', '1');
+  if (!localStorage.getItem('factureCompteur')) localStorage.setItem('factureCompteur', '1');
+  if (!localStorage.getItem('avoirCompteur')) localStorage.setItem('avoirCompteur', '1');
+  afficherCompteur();
+}
+function afficherCompteur() {
+  const cle = cleCompteur();
+  const num = localStorage.getItem(cle) || '1';
+  const numFormate = String(num).padStart(3, '0');
+  document.getElementById('numDevis').value = `${prefixeDoc()}-${new Date().getFullYear()}-${numFormate}`;
+  const typeLabel = typeDocumentActuel === 'facture' ? 'Facture' : typeDocumentActuel === 'avoir' ? 'Avoir' : 'Devis';
+  document.getElementById('compteurDevis').textContent = `${typeLabel} n°${num}`;
+  document.getElementById('labelCompteur').textContent = `Numérotation automatique (${typeDocumentActuel === 'facture' ? 'factures' : typeDocumentActuel === 'avoir' ? 'avoirs' : 'devis'})`;
+  mettreAJourNomFichierExport();
+  mettreAJourApercu();
+}
+function incrementerCompteur() {
+  const cle = cleCompteur();
+  let num = (parseInt(localStorage.getItem(cle)) || 1) + 1;
+  localStorage.setItem(cle, String(num));
+  afficherCompteur();
+}
+function reinitialiserCompteur() {
+  if (typeDocumentActuel === 'facture' || typeDocumentActuel === 'avoir') {
+    const libelle = typeDocumentActuel === 'facture' ? 'facture' : 'avoir';
+    const archive = chargerArchive().filter(x => x.type === typeDocumentActuel);
+    const dernierNumero = archive.length > 0 ? archive[0].numero : `aucun(e) ${libelle} archivé(e)`;
+    const saisie = prompt(
+      `⚠️ ATTENTION : la loi impose une numérotation de facture (et, par bonne pratique, d'avoir) continue et sans rupture (Art. A123-13 du Code de commerce).\n\n` +
+      `Réinitialiser ce compteur alors que des ${libelle}s ont déjà été émis (dernier archivé : ${dernierNumero}) risque de générer des doublons de numéro, ce qui est illégal.\n\n` +
+      `Ne réinitialise ce compteur qu'en tout début d'activité, ou au changement d'année si tu inclus l'année dans ton format de numéro.\n\n` +
+      `Tape RESET pour confirmer que tu as bien compris et que tu veux continuer :`
+    );
+    if (saisie !== 'RESET') return;
+  } else {
+    if (!confirm('Réinitialiser la numérotation des devis ?')) return;
+  }
+  localStorage.setItem(cleCompteur(), '1');
+  afficherCompteur();
+}
+
+document.getElementById('acompteActif').addEventListener('change', function() {
+  document.getElementById('acompteChamps').style.display = this.checked ? 'flex' : 'none';
+  mettreAJourApercu();
+});
+document.getElementById('remiseGlobaleActive').addEventListener('change', function() {
+  document.getElementById('remiseGlobaleChamps').style.display = this.checked ? 'flex' : 'none';
+  mettreAJourApercu();
+});
+document.getElementById('assurancesActives').addEventListener('change', function() {
+  document.getElementById('champsAssurances').style.display = this.checked ? 'flex' : 'none';
+  localStorage.setItem('assurancesActives', this.checked ? '1' : '0');
+  mettreAJourApercu();
+});
+function chargerAssurances() {
+  const actif = localStorage.getItem('assurancesActives') === '1';
+  document.getElementById('assurancesActives').checked = actif;
+  document.getElementById('champsAssurances').style.display = actif ? 'flex' : 'none';
+}
+document.getElementById('franchiseTVA').addEventListener('change', function() {
+  document.getElementById('tauxTVAContainer').style.display = this.checked ? 'none' : 'block';
+  mettreAJourApercu();
+});
+document.getElementById('statutJuridique').addEventListener('change', function() {
+  document.getElementById('champCapitalSocial').style.display = FORMES_AVEC_CAPITAL.includes(this.value) ? 'block' : 'none';
+  mettreAJourApercu();
+});
+document.getElementById('clientType').addEventListener('change', function() {
+  document.getElementById('champSirenClient').style.display = this.value === 'professionnel' ? 'block' : 'none';
+  mettreAJourApercu();
+});
+document.getElementById('livraisonDifferente').addEventListener('change', function() {
+  document.getElementById('champAdresseLivraison').style.display = this.checked ? 'block' : 'none';
+  mettreAJourApercu();
+});
+
+let chargementInitialTermine = false;
+
+function sauvegarderBrouillon() {
+  if (!chargementInitialTermine) return;
+  const brouillon = {
+    numDevis: document.getElementById('numDevis').value,
+    dateDevis: document.getElementById('dateDevis').value,
+    validiteJours: document.getElementById('validiteJours').value,
+    devisGratuit: document.getElementById('devisGratuit').checked,
+    dateVenteExecution: document.getElementById('dateVenteExecution').value,
+    natureOperation: document.getElementById('natureOperation').value,
+    tvaDebits: document.getElementById('tvaDebits').checked,
+    clientId: clientSelectionneId,
+    clientNom: document.getElementById('clientNom').value,
+    clientContact: document.getElementById('clientContact').value,
+    clientAddr: document.getElementById('clientAddr').value,
+    clientTel: document.getElementById('clientTel').value,
+    clientEmail: document.getElementById('clientEmail').value,
+    clientType: document.getElementById('clientType').value,
+    clientSiren: document.getElementById('clientSiren').value,
+    livraisonDifferente: document.getElementById('livraisonDifferente').checked,
+    clientAddrLivraison: document.getElementById('clientAddrLivraison').value,
+    projetDesc: document.getElementById('projetDesc').value,
+    dateDebut: document.getElementById('dateDebut').value,
+    projetDelai: document.getElementById('projetDelai').value,
+    franchiseTVA: document.getElementById('franchiseTVA').checked,
+    tauxTVA: document.getElementById('tauxTVA').value,
+    remiseGlobaleActive: document.getElementById('remiseGlobaleActive').checked,
+    remiseGlobalePourcent: document.getElementById('remiseGlobalePourcent').value,
+    remiseGlobaleMotif: document.getElementById('remiseGlobaleMotif').value,
+    acompteActif: document.getElementById('acompteActif').checked,
+    acomptePourcent: document.getElementById('acomptePourcent').value,
+    avoirReference: document.getElementById('avoirReference').value,
+    lignes: [...document.querySelectorAll('.ligne')].map(l => ({
+      desc: l.querySelector('.desc').value,
+      qte: l.querySelector('.qte').value,
+      unite: l.querySelector('.unite').value,
+      prix: l.querySelector('.prix').value,
+      remise: l.querySelector('.remise').value
+    }))
+  };
+  try {
+    localStorage.setItem('brouillonActuel', JSON.stringify(brouillon));
+  } catch (e) {
+  }
+}
+
+function chargerBrouillon() {
+  const brut = localStorage.getItem('brouillonActuel');
+  if (!brut) return false;
+  let b;
+  try { b = JSON.parse(brut); } catch (e) { return false; }
+
+  const setVal = (id, val) => { if (val !== undefined && val !== null) document.getElementById(id).value = val; };
+  const setChecked = (id, val) => { if (val !== undefined && val !== null) document.getElementById(id).checked = val; };
+
+  setVal('numDevis', b.numDevis);
+  setVal('dateDevis', b.dateDevis);
+  setVal('validiteJours', b.validiteJours);
+  setChecked('devisGratuit', b.devisGratuit);
+  setVal('dateVenteExecution', b.dateVenteExecution);
+  setVal('natureOperation', b.natureOperation);
+  setChecked('tvaDebits', b.tvaDebits);
+  if (b.clientId && clientsCache.some(c => c.id === b.clientId)) {
+    clientSelectionneId = b.clientId;
+    document.getElementById('clientSelect').value = b.clientId;
+    document.getElementById('avertissementClient').style.display = 'none';
+    document.getElementById('actionsClientEnregistre').style.display = 'flex';
+  }
+  setVal('clientNom', b.clientNom);
+  setVal('clientContact', b.clientContact);
+  setVal('clientAddr', b.clientAddr);
+  setVal('clientTel', b.clientTel);
+  setVal('clientEmail', b.clientEmail);
+  setVal('clientType', b.clientType);
+  setVal('clientSiren', b.clientSiren);
+  setChecked('livraisonDifferente', b.livraisonDifferente);
+  setVal('clientAddrLivraison', b.clientAddrLivraison);
+  setVal('projetDesc', b.projetDesc);
+  setVal('dateDebut', b.dateDebut);
+  setVal('projetDelai', b.projetDelai);
+  setChecked('franchiseTVA', b.franchiseTVA);
+  setVal('tauxTVA', b.tauxTVA);
+  setChecked('remiseGlobaleActive', b.remiseGlobaleActive);
+  setVal('remiseGlobalePourcent', b.remiseGlobalePourcent);
+  setVal('remiseGlobaleMotif', b.remiseGlobaleMotif);
+  setChecked('acompteActif', b.acompteActif);
+  setVal('acomptePourcent', b.acomptePourcent);
+  setVal('avoirReference', b.avoirReference);
+
+  document.getElementById('tauxTVAContainer').style.display = document.getElementById('franchiseTVA').checked ? 'none' : 'block';
+  document.getElementById('champSirenClient').style.display = document.getElementById('clientType').value === 'professionnel' ? 'block' : 'none';
+  document.getElementById('champAdresseLivraison').style.display = document.getElementById('livraisonDifferente').checked ? 'block' : 'none';
+  document.getElementById('remiseGlobaleChamps').style.display = document.getElementById('remiseGlobaleActive').checked ? 'flex' : 'none';
+  document.getElementById('acompteChamps').style.display = document.getElementById('acompteActif').checked ? 'flex' : 'none';
+
+  document.getElementById('lignesContainer').innerHTML = '';
+  if (Array.isArray(b.lignes) && b.lignes.length > 0) {
+    b.lignes.forEach(l => ajouterLigne(l.desc, l.qte, l.unite, l.prix, l.remise));
+  }
+  return true;
+}
+
+function mettreAJourApercu() {
+  document.getElementById('nomEntApercu').textContent = document.getElementById('nomEntreprise').value || 'Votre entreprise';
+  const nomCommercial = document.getElementById('nomCommercial').value;
+  document.getElementById('nomCommercialApercu').textContent = nomCommercial ? 'Nom commercial : ' + nomCommercial : '';
+  document.getElementById('statutApercu').textContent = document.getElementById('statutJuridique').value;
+  const statutJur = document.getElementById('statutJuridique').value;
+  const capitalVal = document.getElementById('capitalSocial').value;
+  document.getElementById('capitalApercu').textContent = (FORMES_AVEC_CAPITAL.includes(statutJur) && capitalVal) ? 'Capital social : ' + capitalVal : '';
+  document.getElementById('addrEntApercu').textContent = document.getElementById('addrEntreprise').value;
+  document.getElementById('telEntApercu').textContent = document.getElementById('telEntreprise').value;
+  document.getElementById('emailEntApercu').textContent = document.getElementById('emailEntreprise').value;
+  const siret = document.getElementById('siret').value;
+  document.getElementById('siretApercu').textContent = siret ? 'SIRET : ' + siret : '';
+  document.getElementById('rcsApercu').textContent = document.getElementById('rcsRm').value;
+  const codeNAF = document.getElementById('codeNAF').value;
+  document.getElementById('nafApercu').textContent = codeNAF ? 'Code NAF/APE : ' + codeNAF : '';
+  const tvaIntra = document.getElementById('numTVAIntra').value;
+  document.getElementById('tvaIntraApercu').textContent = tvaIntra ? 'N° TVA intracom. : ' + tvaIntra : '';
+
+  document.getElementById('numApercu').textContent = document.getElementById('numDevis').value;
+  document.getElementById('titreDoc').textContent = typeDocumentActuel === 'facture' ? 'FACTURE' : typeDocumentActuel === 'avoir' ? 'AVOIR' : 'DEVIS';
+  const avoirRef = document.getElementById('avoirReference').value;
+  document.getElementById('referenceAvoirApercu').textContent = (typeDocumentActuel === 'avoir' && avoirRef) ? 'Corrige la facture n° ' + avoirRef : '';
+  document.getElementById('gratuitApercu').textContent = typeDocumentActuel !== 'devis'
+    ? ''
+    : (document.getElementById('devisGratuit').checked ? 'Devis gratuit' : 'Devis payant');
+
+  const clientContact = document.getElementById('clientContact').value;
+  document.getElementById('contactApercu').textContent = clientContact ? 'À l\'attention de ' + clientContact : '';
+  document.getElementById('clientApercu').textContent = document.getElementById('clientNom').value;
+  document.getElementById('addrApercu').textContent = document.getElementById('clientAddr').value;
+  document.getElementById('telApercu').textContent = document.getElementById('clientTel').value;
+
+  const clientPro = document.getElementById('clientType').value === 'professionnel';
+  const clientSirenVal = document.getElementById('clientSiren').value;
+  document.getElementById('sirenClientApercu').textContent = (typeDocumentActuel !== 'devis' && clientPro && clientSirenVal) ? 'SIREN : ' + clientSirenVal : '';
+
+  const livraisonDiff = document.getElementById('livraisonDifferente').checked;
+  const adrLivraison = document.getElementById('clientAddrLivraison').value;
+  document.getElementById('livraisonApercu').textContent = (typeDocumentActuel !== 'devis' && livraisonDiff && adrLivraison) ? 'Livraison : ' + adrLivraison : '';
+  document.getElementById('delaiApercu').textContent = document.getElementById('projetDelai').value;
+  document.getElementById('projApercu').textContent = document.getElementById('projetDesc').value;
+
+  const notes = document.getElementById('notes').value;
+  document.getElementById('notesApercu').textContent = notes;
+  document.getElementById('notesBloc').style.display = notes ? 'block' : 'none';
+
+  const assurancesActives = document.getElementById('assurancesActives').checked;
+  const rcPro = document.getElementById('rcProAssureur').value;
+  const decAssureur = document.getElementById('decennaleAssureur').value;
+  const decNum = document.getElementById('decennaleNumPolice').value;
+  const decZone = document.getElementById('decennaleZone').value;
+  document.getElementById('rcProApercu').textContent = rcPro ? 'Assurance RC professionnelle : ' + rcPro : '';
+  const decennaleTexte = [decAssureur, decNum ? 'police n°' + decNum : '', decZone].filter(Boolean).join(' — ');
+  document.getElementById('decennaleApercu').textContent = decennaleTexte ? 'Assurance décennale : ' + decennaleTexte : '';
+  document.getElementById('assurancesBloc').style.display = (assurancesActives && (rcPro || decennaleTexte)) ? 'block' : 'none';
+
+  const dateVal = document.getElementById('dateDevis').value;
+  if (dateVal) {
+    const d = new Date(dateVal + 'T00:00:00');
+    document.getElementById('dateApercu').textContent = d.toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'});
+  }
+  const conditionsDiv = document.getElementById('conditionsReglement');
+  if (typeDocumentActuel !== 'devis') {
+    document.getElementById('validiteApercu').textContent = '';
+    const dateVente = document.getElementById('dateVenteExecution').value;
+    if (dateVente && dateVente !== dateVal) {
+      const dV = new Date(dateVente + 'T00:00:00');
+      document.getElementById('dateVenteApercu').textContent = 'Date de vente/exécution : ' + dV.toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'});
+    } else {
+      document.getElementById('dateVenteApercu').textContent = '';
+    }
+    const delaiJ = parseInt(document.getElementById('delaiPaiementJours').value) || 30;
+    let echeanceTexte = `Délai de paiement : ${delaiJ} jours`;
+    if (dateVal) {
+      const dEch = new Date(dateVal + 'T00:00:00');
+      dEch.setDate(dEch.getDate() + delaiJ);
+      echeanceTexte += ` — Échéance : ${dEch.toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'})}`;
+    }
+    document.getElementById('modeReglementApercu').textContent = 'Mode de règlement : ' + document.getElementById('modeReglement').value;
+    document.getElementById('echeanceApercu').textContent = echeanceTexte;
+    document.getElementById('escompteApercu').textContent = document.getElementById('escompteTexte').value;
+    document.getElementById('penalitesApercu').textContent = 'Pénalités de retard : ' + document.getElementById('penalitesTexte').value;
+    const natureLabels = { biens: 'Livraison de biens', services: 'Prestation de services', mixte: 'Livraison de biens et prestations de services' };
+    document.getElementById('natureOpApercu').textContent = 'Nature de l\'opération : ' + natureLabels[document.getElementById('natureOperation').value];
+    document.getElementById('tvaDebitsApercu').style.display = document.getElementById('tvaDebits').checked ? 'block' : 'none';
+
+    const iban = document.getElementById('banqueIban').value;
+    const bic = document.getElementById('banqueBic').value;
+    const banque = document.getElementById('banqueNom').value;
+    if (iban) {
+      document.getElementById('coordBancairesApercu').textContent = 'Paiement par virement' + (banque ? ' — ' + banque : '');
+      document.getElementById('ibanApercu').textContent = 'IBAN : ' + iban;
+      document.getElementById('bicApercu').textContent = bic ? 'BIC : ' + bic : '';
+    } else {
+      document.getElementById('coordBancairesApercu').textContent = '';
+      document.getElementById('ibanApercu').textContent = '';
+      document.getElementById('bicApercu').textContent = '';
+    }
+
+    conditionsDiv.style.display = 'block';
+  } else {
+    document.getElementById('validiteApercu').textContent = `Valable ${document.getElementById('validiteJours').value || 30} jours`;
+    document.getElementById('dateVenteApercu').textContent = '';
+    conditionsDiv.style.display = 'none';
+  }
+
+  const dateDebutVal = document.getElementById('dateDebut').value;
+  document.getElementById('debutApercu').textContent = dateDebutVal
+    ? 'Début : ' + new Date(dateDebutVal + 'T00:00:00').toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'})
+    : '';
+
+  let totalHT = 0;
+  let totalBrutGlobal = 0;
+  let html = '';
+  const remisesUtilisees = new Set();
+  document.querySelectorAll('.ligne').forEach(l => {
+    const desc = l.querySelector('.desc').value;
+    const qte = parseFloat(l.querySelector('.qte').value) || 0;
+    const unite = l.querySelector('.unite').value;
+    const prix = parseFloat(l.querySelector('.prix').value) || 0;
+    const remise = parseFloat(l.querySelector('.remise').value) || 0;
+    const totalBrut = qte * prix;
+    const total = totalBrut * (1 - remise / 100);
+    totalHT += total;
+    totalBrutGlobal += totalBrut;
+    if (remise > 0) remisesUtilisees.add(remise);
+    const descEchappee = echapperHTML(desc);
+    const descAffichee = remise > 0 ? `${descEchappee} <span style="color:#A32D2D; font-size:0.9em;">(remise ${remise}%)</span>` : descEchappee;
+    html += `<tr><td>${descAffichee}</td><td style="text-align:center;">${qte}</td><td style="text-align:center;">${echapperHTML(unite)}</td><td style="text-align:right;">${prix.toFixed(2)}€</td><td style="text-align:right;">${total.toFixed(2)}€</td></tr>`;
+  });
+  document.getElementById('tableBody').innerHTML = html;
+
+  const remiseGlobale = totalBrutGlobal - totalHT;
+  if (remiseGlobale > 0.001) {
+    document.getElementById('totalBrutHT').textContent = totalBrutGlobal.toFixed(2) + '€';
+    if (remisesUtilisees.size === 1) {
+      const tauxUnique = [...remisesUtilisees][0];
+      document.getElementById('labelRemiseGlobale').textContent = `Remise (${tauxUnique}%)`;
+    } else {
+      document.getElementById('labelRemiseGlobale').textContent = 'Remise (taux variables selon les lignes)';
+    }
+    document.getElementById('montantRemiseGlobale').textContent = '-' + remiseGlobale.toFixed(2) + '€';
+    document.getElementById('ligneBrutRemise').style.display = 'flex';
+    document.getElementById('labelTotalHT').textContent = 'Total Net HT';
+  } else {
+    document.getElementById('ligneBrutRemise').style.display = 'none';
+    document.getElementById('labelTotalHT').textContent = 'Total HT';
+  }
+
+  let totalHTFinal = totalHT;
+  const remiseGlobaleActive = document.getElementById('remiseGlobaleActive').checked;
+  if (remiseGlobaleActive) {
+    const pourcentGlobalManuel = parseFloat(document.getElementById('remiseGlobalePourcent').value) || 0;
+    const montantRemiseManuelle = totalHT * (pourcentGlobalManuel / 100);
+    const motif = document.getElementById('remiseGlobaleMotif').value.trim();
+    document.getElementById('labelRemiseGlobaleManuelle').textContent = `Remise globale (${pourcentGlobalManuel}%)` + (motif ? ' — ' + motif : '');
+    document.getElementById('montantRemiseGlobaleManuelle').textContent = '-' + montantRemiseManuelle.toFixed(2) + '€';
+    document.getElementById('ligneRemiseGlobaleManuelle').style.display = 'flex';
+    totalHTFinal = totalHT - montantRemiseManuelle;
+    document.getElementById('totalApresRemiseGlobale').textContent = totalHTFinal.toFixed(2) + '€';
+    document.getElementById('ligneTotalApresRemiseGlobale').style.display = 'flex';
+  } else {
+    document.getElementById('ligneRemiseGlobaleManuelle').style.display = 'none';
+    document.getElementById('ligneTotalApresRemiseGlobale').style.display = 'none';
+  }
+
+  const franchise = document.getElementById('franchiseTVA').checked;
+  let totalTTC;
+  if (franchise) {
+    totalTTC = totalHTFinal;
+    document.getElementById('ligneTVA').style.display = 'none';
+    document.getElementById('mentionFranchise').style.display = 'block';
+  } else {
+    const taux = parseFloat(document.getElementById('tauxTVA').value) || 0;
+    const tva = totalHTFinal * (taux/100);
+    totalTTC = totalHTFinal + tva;
+    document.getElementById('labelTVA').textContent = `TVA (${taux}%)`;
+    document.getElementById('totalTVA').textContent = tva.toFixed(2) + '€';
+    document.getElementById('ligneTVA').style.display = 'flex';
+    document.getElementById('mentionFranchise').style.display = 'none';
+  }
+  document.getElementById('totalHT').textContent = totalHT.toFixed(2) + '€';
+  document.getElementById('totalTTC').textContent = totalTTC.toFixed(2) + '€';
+
+  const acompteActif = document.getElementById('acompteActif').checked;
+  let montantAcompteVal = 0;
+  if (acompteActif) {
+    const pourcent = parseFloat(document.getElementById('acomptePourcent').value) || 0;
+    montantAcompteVal = totalTTC * (pourcent/100);
+    document.getElementById('labelAcompte').textContent = `Acompte demandé (${pourcent}%)`;
+    document.getElementById('montantAcompte').textContent = montantAcompteVal.toFixed(2) + '€';
+    document.getElementById('soldeRestant').textContent = (totalTTC - montantAcompteVal).toFixed(2) + '€';
+    document.getElementById('ligneAcompteApercu').style.display = 'flex';
+  } else {
+    document.getElementById('ligneAcompteApercu').style.display = 'none';
+  }
+
+  mettreAJourCTA(acompteActif, montantAcompteVal, totalTTC);
+  sauvegarderBrouillon();
+}
+
+let dossierExportHandle = null;
+
+function supporteFileSystemAccess() {
+  return 'showDirectoryPicker' in window && window.self === window.top;
+}
+
+async function choisirDossierExport() {
+  if (!supporteFileSystemAccess()) {
+    document.getElementById('avertissementDossier').style.display = 'block';
+    return;
+  }
+  try {
+    dossierExportHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+    document.getElementById('statutDossier').textContent = `✓ Dossier sélectionné : ${dossierExportHandle.name}`;
+    mettreAJourNomFichierExport();
+  } catch (e) {
+  }
+}
+
+function mettreAJourNomFichierExport() {
+  const el = document.getElementById('nomFichierExport');
+  if (!dossierExportHandle) {
+    el.style.display = 'none';
+    return;
+  }
+  const numDoc = document.getElementById('numDevis').value;
+  el.textContent = `📄 Fichier à exporter : ${numDoc}.pdf`;
+  el.style.display = 'block';
+}
+
+async function genererPdfDocument() {
+  const element = document.getElementById('apercu');
+  const largeurOriginale = element.style.width;
+  const maxLargeurOriginale = element.style.maxWidth;
+  element.style.width = '794px';
+  element.style.maxWidth = '794px';
+
+  await new Promise(r => setTimeout(r, 100));
+
+  const ctaEl = document.getElementById('ctaLien');
+  const ctaVisible = ctaEl && window.getComputedStyle(document.getElementById('ctaAcceptation')).display !== 'none';
+  let ctaRectRelatif = null;
+  let ctaHref = null;
+  if (ctaVisible) {
+    const apercuRect = element.getBoundingClientRect();
+    const ctaRect = ctaEl.getBoundingClientRect();
+    ctaRectRelatif = {
+      x: ctaRect.left - apercuRect.left,
+      y: ctaRect.top - apercuRect.top,
+      w: ctaRect.width,
+      h: ctaRect.height
+    };
+    ctaHref = ctaEl.href;
+  }
+
+  const canvas = await html2canvas(element, { scale: 2, useCORS: true, windowWidth: 794, width: 794 });
+  element.style.width = largeurOriginale;
+  element.style.maxWidth = maxLargeurOriginale;
+
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const largeurPage = pdf.internal.pageSize.getWidth();
+  const hauteurPage = pdf.internal.pageSize.getHeight();
+  const hauteurImage = (canvas.height * largeurPage) / canvas.width;
+  const imgData = canvas.toDataURL('image/jpeg', 0.98);
+
+  let hauteurRestante = hauteurImage;
+  let position = 0;
+  pdf.addImage(imgData, 'JPEG', 0, position, largeurPage, hauteurImage);
+  hauteurRestante -= hauteurPage;
+  let nombrePages = 1;
+  while (hauteurRestante > 0) {
+    position = hauteurRestante - hauteurImage;
+    pdf.addPage();
+    pdf.addImage(imgData, 'JPEG', 0, position, largeurPage, hauteurImage);
+    hauteurRestante -= hauteurPage;
+    nombrePages++;
+  }
+
+  if (ctaRectRelatif && ctaHref) {
+    const ratio = largeurPage / 794;
+    const xMM = ctaRectRelatif.x * ratio;
+    const largeurMM = ctaRectRelatif.w * ratio;
+    const yDebutMM = ctaRectRelatif.y * ratio;
+    const yFinMM = (ctaRectRelatif.y + ctaRectRelatif.h) * ratio;
+    const pageDebut = Math.floor(yDebutMM / hauteurPage);
+    const pageFin = Math.floor(yFinMM / hauteurPage);
+    for (let p = pageDebut; p <= pageFin && p < nombrePages; p++) {
+      const yHautSurPage = Math.max(0, yDebutMM - p * hauteurPage);
+      const yBasSurPage = Math.min(hauteurPage, yFinMM - p * hauteurPage);
+      const hauteurLienMM = yBasSurPage - yHautSurPage;
+      if (hauteurLienMM > 0) {
+        pdf.setPage(p + 1);
+        pdf.link(xMM, yHautSurPage, largeurMM, hauteurLienMM, { url: ctaHref });
+      }
+    }
+  }
+
+  return pdf;
+}
+
+async function genererPdfBlob() {
+  const pdf = await genererPdfDocument();
+  return pdf.output('blob');
+}
+
+async function telechargerPDFDirect() {
+  const btn = document.getElementById('btnTelechargerDirect');
+  const numDoc = document.getElementById('numDevis').value;
+  btn.textContent = 'Génération en cours...';
+  btn.disabled = true;
+  try {
+    const pdf = await genererPdfDocument();
+    pdf.save(`${numDoc}.pdf`);
+    incrementerCompteur();
+  } catch (e) {
+    alert("Erreur lors de la génération du PDF : " + e.message + "\n\nUtilise plutôt le bouton \"Imprimer / Enregistrer en PDF\" en solution de secours.");
+  } finally {
+    btn.textContent = '⬇️ Télécharger le PDF (rendu identique partout)';
+    btn.disabled = false;
+  }
+}
+
+async function exporterPDFDossier() {
+  if (!supporteFileSystemAccess()) {
+    document.getElementById('avertissementDossier').style.display = 'block';
+    return;
+  }
+  if (!dossierExportHandle) {
+    alert("Choisis d'abord ton dossier de sauvegarde avec le bouton ci-dessus.");
+    return;
+  }
+  const numDoc = document.getElementById('numDevis').value;
+  try {
+    const blob = await genererPdfBlob();
+    const fileHandle = await dossierExportHandle.getFileHandle(`${numDoc}.pdf`, { create: true });
+    const writable = await fileHandle.createWritable();
+    await writable.write(blob);
+    await writable.close();
+    document.getElementById('statutDossier').textContent = `✓ ${numDoc}.pdf enregistré dans ${dossierExportHandle.name}`;
+  } catch (e) {
+    alert("Erreur lors de l'export du PDF : " + e.message);
+  }
+}
+
+function ouvrirEmailAvecService(destinataire, copie, sujetTexte, corpsTexte) {
+  const sujet = encodeURIComponent(sujetTexte);
+  const corps = encodeURIComponent(corpsTexte);
+  const service = document.getElementById('serviceMail').value;
+  localStorage.setItem('servicePrefereMail', service);
+
+  let url;
+  switch (service) {
+    case 'gmail':
+      url = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(destinataire)}&cc=${encodeURIComponent(copie)}&su=${sujet}&body=${corps}`;
+      window.open(url, '_blank');
+      break;
+    case 'outlook':
+      url = `https://outlook.live.com/mail/0/deeplink/compose?to=${encodeURIComponent(destinataire)}&cc=${encodeURIComponent(copie)}&subject=${sujet}&body=${corps}`;
+      window.open(url, '_blank');
+      break;
+    case 'yahoo':
+      url = `https://compose.mail.yahoo.com/?to=${encodeURIComponent(destinataire)}&cc=${encodeURIComponent(copie)}&subject=${sujet}&body=${corps}`;
+      window.open(url, '_blank');
+      break;
+    default:
+      window.location.href = `mailto:${destinataire}?cc=${encodeURIComponent(copie)}&subject=${sujet}&body=${corps}`;
+  }
+}
+
+async function archiverManuel() {
+  const numDoc = document.getElementById('numDevis').value;
+  if (!confirm(`Archiver « ${numDoc} » dans l'historique local ? À faire seulement si ce document a bien été transmis au client (ce sera définitif pour une facture ou un avoir).`)) return;
+  const ok = await archiverDocument();
+  if (ok) {
+    alert(`« ${numDoc} » a été ajouté à l'archive locale.`);
+  }
+}
+
+async function preparerEmailEnvoi() {
+  const emailEntreprise = document.getElementById('emailEntreprise').value.trim();
+  const emailClient = document.getElementById('clientEmail').value.trim();
+  const numDoc = document.getElementById('numDevis').value;
+  const nomEnt = document.getElementById('nomEntreprise').value || 'votre entreprise';
+  const nomClient = document.getElementById('clientNom').value;
+  const totalTTC = document.getElementById('totalTTC').textContent;
+  const estFacture = typeDocumentActuel === 'facture';
+
+  if (!emailClient) {
+    alert("Renseigne d'abord l'email du client dans le bloc « Client » pour pouvoir lui envoyer directement.");
+    return;
+  }
+
+  const sujetTexte = `${estFacture ? 'Facture' : 'Devis'} ${numDoc} — ${nomEnt}`;
+  const corpsTexte =
+`Bonjour ${nomClient},
+
+Veuillez trouver ci-joint ${estFacture ? 'la facture' : 'le devis'} ${numDoc} d'un montant de ${totalTTC} TTC.
+
+⚠️ Pense à joindre le fichier PDF enregistré avant d'envoyer ce message.
+
+Cordialement,
+${nomEnt}`;
+
+  if (!(await archiverDocument())) return;
+  if (dossierExportHandle) {
+    exporterPDFDossier();
+  }
+
+  ouvrirEmailAvecService(emailClient, emailEntreprise, sujetTexte, corpsTexte);
+}
+
+function clesDonneesUtilisateur() {
+  return [...CHAMPS_ENTREPRISE, 'logoData', 'notesDevis', 'designTemplate', 'designPolice',
+    'typeDocumentActuel', 'servicePrefereMail', 'devisCompteur', 'factureCompteur', 'avoirCompteur',
+    'assurancesActives', 'archiveDocuments', 'brouillonActuel', 'dernierExportComplet', 'nomSauvegardePersonnalise'];
+}
+
+function documentDejaExporte(e) {
+  const dernierExport = localStorage.getItem('dernierExportComplet');
+  return !!(dernierExport && e.envoyeLeISO && e.envoyeLeISO <= dernierExport);
+}
+
+let dossierSauvegardeHandle = null;
+
+async function choisirDossierSauvegarde() {
+  if (!supporteFileSystemAccess()) {
+    document.getElementById('avertissementDossierSauvegarde').style.display = 'block';
+    return;
+  }
+  try {
+    dossierSauvegardeHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+    document.getElementById('statutDossierSauvegarde').textContent = `✓ Dossier sélectionné : ${dossierSauvegardeHandle.name} — l'export ira directement ici, et les sauvegardes qu'il contient apparaîtront ci-dessous.`;
+    await rafraichirListeFichiersSauvegarde();
+  } catch (e) {
+  }
+}
+
+async function rafraichirListeFichiersSauvegarde() {
+  const bloc = document.getElementById('blocFichiersDossierSauvegarde');
+  const liste = document.getElementById('listeFichiersSauvegarde');
+  if (!dossierSauvegardeHandle) {
+    bloc.style.display = 'none';
+    return;
+  }
+  const fichiers = [];
+  for await (const [nom, handle] of dossierSauvegardeHandle.entries()) {
+    if (handle.kind === 'file' && nom.toLowerCase().endsWith('.json')) fichiers.push(nom);
+  }
+  fichiers.sort().reverse();
+
+  bloc.style.display = 'flex';
+  if (fichiers.length === 0) {
+    liste.innerHTML = '<p style="margin:0; font-size:11px; color:#7D5D3B;">Aucun fichier .json trouvé dans ce dossier pour l\'instant.</p>';
+    return;
+  }
+  liste.innerHTML = fichiers.map(nom => `
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; border:1px solid #E8E4DB; border-radius:6px; padding:6px 8px; background:white;">
+      <span style="font-size:11px; color:#5C4033; word-break:break-all;">${echapperHTML(nom)}</span>
+      <button class="btn-secondaire" style="width:auto; padding:4px 8px; font-size:10px; white-space:nowrap;" onclick="restaurerDepuisDossier(this)" data-nom="${echapperAttribut(nom)}">Restaurer</button>
+    </div>
+  `).join('');
+}
+
+async function restaurerDepuisDossier(boutonEl) {
+  const nomFichier = boutonEl.dataset.nom;
+  const statut = document.getElementById('statutImportSauvegarde');
+  statut.style.display = 'block';
+  if (!dossierSauvegardeHandle) {
+    statut.style.color = '#A32D2D';
+    statut.textContent = 'Aucun dossier de sauvegarde sélectionné.';
+    return;
+  }
+  try {
+    const fileHandle = await dossierSauvegardeHandle.getFileHandle(nomFichier);
+    const file = await fileHandle.getFile();
+    const texte = await file.text();
+    appliquerTexteSauvegarde(texte, nomFichier, statut);
+  } catch (e) {
+    statut.style.color = '#A32D2D';
+    statut.textContent = `Impossible de lire « ${nomFichier} » depuis le dossier : ${e.message}`;
+  }
+}
+
+function telechargerBlobSauvegarde(contenu, nomFichier) {
+  const blob = new Blob([contenu], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nomFichier;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function construireNomFichierSauvegarde(nomPersonnalise, dateExportISO) {
+  const dateTexte = dateExportISO.split('T')[0];
+  let nom = String(nomPersonnalise || '').trim();
+  nom = nom.replace(/\.json$/i, '').trim();
+  nom = nom.replace(/[\\/:*?"<>|]/g, '-').trim();
+  if (!nom) nom = 'sauvegarde-devis';
+  if (!nom.includes(dateTexte)) nom = `${nom}-${dateTexte}`;
+  return `${nom}.json`;
+}
+
+async function exporterSauvegardeJSON() {
+  const donnees = {};
+  clesDonneesUtilisateur().forEach(cle => {
+    const v = localStorage.getItem(cle);
+    if (v !== null) donnees[cle] = v;
+  });
+  const dateExport = new Date().toISOString();
+  donnees.dernierExportComplet = dateExport;
+  const sauvegarde = {
+    outil: 'Générateur de Devis',
+    dateExport: dateExport,
+    donnees: donnees
+  };
+  const contenu = JSON.stringify(sauvegarde, null, 2);
+  const nomPersonnalise = document.getElementById('nomSauvegardePersonnalise').value;
+  const nomFichier = construireNomFichierSauvegarde(nomPersonnalise, dateExport);
+
+  if (dossierSauvegardeHandle) {
+    try {
+      const fileHandle = await dossierSauvegardeHandle.getFileHandle(nomFichier, { create: true });
+      const writable = await fileHandle.createWritable();
+      await writable.write(contenu);
+      await writable.close();
+      document.getElementById('statutDossierSauvegarde').textContent = `✓ ${nomFichier} enregistré dans ${dossierSauvegardeHandle.name}`;
+      await rafraichirListeFichiersSauvegarde();
+    } catch (e) {
+      alert("Erreur lors de l'enregistrement dans le dossier : " + e.message + "\n\nLe téléchargement classique va être utilisé à la place.");
+      telechargerBlobSauvegarde(contenu, nomFichier);
+    }
+  } else {
+    telechargerBlobSauvegarde(contenu, nomFichier);
+  }
+
+  localStorage.setItem('dernierExportComplet', dateExport);
+  afficherArchive();
+}
+
+function appliquerTexteSauvegarde(texteBrut, nomSource, statutEl) {
+  let sauvegarde;
+  try {
+    const texte = String(texteBrut).replace(/^\uFEFF/, '').trim();
+    if (!texte) {
+      statutEl.style.color = '#A32D2D';
+      statutEl.textContent = 'Aucun contenu à restaurer — le champ est vide.';
+      return;
+    }
+    sauvegarde = JSON.parse(texte);
+  } catch (err) {
+    statutEl.style.color = '#A32D2D';
+    statutEl.textContent = `Contenu invalide (${nomSource}) : ce n'est pas un JSON correct (erreur : ${err.message}).`;
+    return;
+  }
+  if (!sauvegarde || typeof sauvegarde.donnees !== 'object') {
+    statutEl.style.color = '#A32D2D';
+    statutEl.textContent = "Ce contenu ne correspond pas au format de sauvegarde attendu (il doit contenir une clé \"donnees\").";
+    return;
+  }
+  statutEl.style.color = '#5C4033';
+  statutEl.textContent = `Sauvegarde reconnue (exportée le ${sauvegarde.dateExport ? new Date(sauvegarde.dateExport).toLocaleString('fr-FR') : '?'}). En attente de ta confirmation dans la fenêtre qui s'affiche...`;
+  const confirme = confirm("Restaurer cette sauvegarde va remplacer toutes les données actuellement enregistrées dans ce navigateur (entreprise, archive, compteurs). Continuer ?");
+  if (!confirme) {
+    statutEl.style.color = '#A32D2D';
+    statutEl.textContent = "Restauration annulée. (Si aucune fenêtre de confirmation n'est apparue, recharge complètement la page — Ctrl+F5 — puis réessaie : ton navigateur bloque peut-être les boîtes de dialogue sur cette page.)";
+    return;
+  }
+  Object.entries(sauvegarde.donnees).forEach(([cle, valeur]) => localStorage.setItem(cle, valeur));
+  statutEl.style.color = '#2C5F63';
+  statutEl.textContent = 'Sauvegarde restaurée. Rechargement de la page...';
+  setTimeout(() => location.reload(), 400);
+}
+
+document.getElementById('importSauvegardeInput').addEventListener('change', function(e) {
+  const statut = document.getElementById('statutImportSauvegarde');
+  statut.style.display = 'block';
+  const file = e.target.files[0];
+  if (!file) {
+    statut.textContent = 'Aucun fichier sélectionné.';
+    return;
+  }
+  statut.style.color = '#7D5D3B';
+  statut.textContent = `Lecture de « ${file.name} »...`;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    appliquerTexteSauvegarde(ev.target.result, file.name, statut);
+    e.target.value = '';
+  };
+  reader.onerror = function() {
+    statut.style.color = '#A32D2D';
+    statut.textContent = "Impossible de lire ce fichier. Réessaie, ou vérifie qu'il s'agit bien du fichier exporté par cet outil.";
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+});
+
+function basculerImportManuel() {
+  const bloc = document.getElementById('blocImportManuel');
+  bloc.style.display = bloc.style.display === 'flex' ? 'none' : 'flex';
+}
+
+function restaurerDepuisTexte() {
+  const statut = document.getElementById('statutImportSauvegarde');
+  statut.style.display = 'block';
+  const texte = document.getElementById('texteImportManuel').value;
+  appliquerTexteSauvegarde(texte, 'texte collé', statut);
+}
+
+let archiveCache = [];
+
+function ligneVersDoc(row) {
+  return {
+    id: row.id,
+    type: row.type,
+    numero: row.numero,
+    dateDocument: row.date_document,
+    clientId: row.client_id,
+    clientNom: row.client_nom,
+    clientEmail: row.client_email,
+    clientAddr: row.client_adresse,
+    clientTel: row.client_telephone,
+    projetDesc: row.projet_description,
+    totalTTC: row.total_ttc !== null ? Number(row.total_ttc).toFixed(2) + ' €' : '',
+    lignes: row.lignes || [],
+    datePaiement: row.date_paiement,
+    avoirReference: '',
+    envoyeLe: new Date(row.created_at).toLocaleString('fr-FR'),
+    envoyeLeISO: row.created_at,
+    statut: row.statut
+  };
+}
+
+async function rafraichirArchiveDepuisSupabase() {
+  if (!entrepriseId) { archiveCache = []; afficherArchive(); afficherBilan(); return; }
+  const { data, error } = await sb.from('documents').select('*').eq('entreprise_id', entrepriseId).order('created_at', { ascending: false }).limit(300);
+  if (error) { console.error('Chargement archive impossible :', error.message); return; }
+  archiveCache = (data || []).map(ligneVersDoc);
+  afficherArchive();
+  afficherRelances();
+  afficherBilan();
+}
+
+const NOMS_MOIS_COURTS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+
+function totalHTLignes(lignes) {
+  return (lignes || []).reduce((somme, l) => {
+    const qte = parseFloat(l.qte) || 0;
+    const prix = parseFloat(l.prix) || 0;
+    const remise = parseFloat(l.remise) || 0;
+    return somme + qte * prix * (1 - remise / 100);
+  }, 0);
+}
+
+function calculerBilan(annee) {
+  const moisBilans = Array(12).fill(0);
+  let totalAnnuel = 0;
+  chargerArchive().forEach(e => {
+    if (e.type === 'facture' && e.statut === 'paye' && e.datePaiement) {
+      const d = new Date(e.datePaiement);
+      if (d.getFullYear() === annee) {
+        const ht = totalHTLignes(e.lignes);
+        moisBilans[d.getMonth()] += ht;
+        totalAnnuel += ht;
+      }
+    } else if (e.type === 'avoir' && e.dateDocument) {
+      const d = new Date(e.dateDocument + 'T00:00:00');
+      if (d.getFullYear() === annee) {
+        const ht = totalHTLignes(e.lignes);
+        moisBilans[d.getMonth()] += ht;
+        totalAnnuel += ht;
+      }
+    }
+  });
+  return { annee, totalAnnuel, moisBilans };
+}
+
+function remplirSelecteurAnnees() {
+  const select = document.getElementById('bilanAnnee');
+  const anneesDispo = new Set([new Date().getFullYear()]);
+  chargerArchive().forEach(e => {
+    if (e.datePaiement) anneesDispo.add(new Date(e.datePaiement).getFullYear());
+    if (e.dateDocument) anneesDispo.add(new Date(e.dateDocument + 'T00:00:00').getFullYear());
+  });
+  const anneesTri = [...anneesDispo].sort((a, b) => b - a);
+  const valeurActuelle = parseInt(select.value);
+  select.innerHTML = anneesTri.map(a => `<option value="${a}">${a}</option>`).join('');
+  select.value = anneesTri.includes(valeurActuelle) ? valeurActuelle : new Date().getFullYear();
+}
+
+function afficherBilan() {
+  remplirSelecteurAnnees();
+  const annee = parseInt(document.getElementById('bilanAnnee').value) || new Date().getFullYear();
+  const { totalAnnuel, moisBilans } = calculerBilan(annee);
+  const maintenant = new Date();
+  const moisActuelIndex = maintenant.getFullYear() === annee ? maintenant.getMonth() : -1;
+  document.getElementById('bilanMoisMontant').textContent = moisActuelIndex >= 0 ? moisBilans[moisActuelIndex].toFixed(2) + ' €' : '—';
+  document.getElementById('bilanAnneeMontant').textContent = totalAnnuel.toFixed(2) + ' €';
+
+  const max = Math.max(...moisBilans.map(m => Math.abs(m)), 1);
+  const graphique = document.getElementById('bilanGraphique');
+  graphique.innerHTML = moisBilans.map((m, i) => {
+    const hauteur = Math.max(2, Math.round((Math.abs(m) / max) * 90));
+    const couleur = m < 0 ? '#A32D2D' : (i === moisActuelIndex ? '#8B6F47' : '#C9B896');
+    return `<div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%;" title="${NOMS_MOIS_COURTS[i]} ${annee} : ${m.toFixed(2)} €">
+      <div style="width:100%; height:${hauteur}px; background:${couleur}; border-radius:3px 3px 0 0;"></div>
+      <span style="font-size:8px; color:#7D5D3B; margin-top:2px;">${NOMS_MOIS_COURTS[i]}</span>
+    </div>`;
+  }).join('');
+}
+
+function chargerArchive() {
+  return archiveCache;
+}
+
+function extraireMontant(texte) {
+  const n = parseFloat(String(texte).replace(/[^\d.,-]/g, '').replace(',', '.'));
+  return isNaN(n) ? null : n;
+}
+
+async function archiverDocument() {
+  if (!entrepriseId) { alert('Connexion en cours, réessaie dans un instant.'); return false; }
+  if (!clientSelectionneId) {
+    document.getElementById('avertissementClient').style.display = 'block';
+    alert('Sélectionne un client existant ou crée-en un nouveau avant d\'archiver ce document.');
+    return false;
+  }
+  if (typeDocumentActuel === 'facture' || typeDocumentActuel === 'avoir') {
+    const numeroActuel = document.getElementById('numDevis').value;
+    const doublon = archiveCache.find(x => x.type === typeDocumentActuel && x.numero === numeroActuel);
+    if (doublon) {
+      const libelle = typeDocumentActuel === 'facture' ? 'facture' : 'avoir';
+      alert(`Le numéro ${numeroActuel} correspond déjà à un(e) ${libelle} archivé(e) avec un contenu différent. Un(e) ${libelle} déjà émis(e) ne peut pas être modifié(e) ni renvoyé(e) sous le même numéro.\n\nSoit tu changes le numéro, soit tu émets un avoir pour corriger la précédente facture.`);
+      return false;
+    }
+  }
+
+  const lignes = [];
+  document.querySelectorAll('.ligne').forEach(l => {
+    lignes.push({
+      desc: l.querySelector('.desc').value,
+      qte: l.querySelector('.qte').value,
+      unite: l.querySelector('.unite').value,
+      prix: l.querySelector('.prix').value,
+      remise: l.querySelector('.remise').value
+    });
+  });
+
+  const nouveauDoc = {
+    entreprise_id: entrepriseId,
+    client_id: clientSelectionneId,
+    type: typeDocumentActuel,
+    numero: document.getElementById('numDevis').value,
+    date_document: document.getElementById('dateDevis').value,
+    client_nom: document.getElementById('clientNom').value,
+    client_email: document.getElementById('clientEmail').value,
+    client_adresse: document.getElementById('clientAddr').value,
+    client_telephone: document.getElementById('clientTel').value,
+    client_type: document.getElementById('clientType').value,
+    client_siren: document.getElementById('clientSiren').value,
+    projet_description: document.getElementById('projetDesc').value,
+    lignes: lignes,
+    total_ttc: extraireMontant(document.getElementById('totalTTC').textContent)
+  };
+
+  const { data, error } = await sb.from('documents')
+    .upsert(nouveauDoc, { onConflict: 'entreprise_id,type,numero' })
+    .select('id')
+    .single();
+  if (error) {
+    const messageLisible = error.message.includes('Modification interdite')
+      ? `Le numéro ${nouveauDoc.numero} correspond déjà à un(e) ${typeDocumentActuel} émis(e) dont le contenu a changé. Un document déjà émis ne peut pas être modifié — change le numéro, ou émets un avoir pour corriger une facture.`
+      : "Impossible d'enregistrer ce document : " + error.message;
+    alert(messageLisible);
+    return false;
+  }
+  const { error: erreurEnvoi } = await sb.rpc('enregistrer_envoi_email', { p_document_id: data.id });
+  if (erreurEnvoi) console.error('Tracking envoi non enregistré :', erreurEnvoi.message);
+
+  await rafraichirArchiveDepuisSupabase();
+  return true;
+}
+
+function basculerArchive() {
+  const liste = document.getElementById('listeArchive');
+  const visible = liste.style.display === 'flex';
+  liste.style.display = visible ? 'none' : 'flex';
+  if (!visible) afficherArchive();
+}
+
+function badgeStatut(e) {
+  if (e.type === 'avoir') return '<span style="font-size:9px; padding:2px 6px; border-radius:10px; background:#FDF3E3; color:#8B6F47;">Avoir</span>';
+  if (e.type === 'facture' && e.statut === 'paye') return '<span style="font-size:9px; padding:2px 6px; border-radius:10px; background:#E8F0E9; color:#2C5F63;">💰 Payée</span>';
+  if (e.type === 'facture') return '<span style="font-size:9px; padding:2px 6px; border-radius:10px; background:#FDF3E3; color:#8B6F47;">Facture</span>';
+  if (e.statut === 'accepte') return '<span style="font-size:9px; padding:2px 6px; border-radius:10px; background:#E8F0E9; color:#2C5F63;">✓ Accepté</span>';
+  if (e.statut === 'relance') return '<span style="font-size:9px; padding:2px 6px; border-radius:10px; background:#FCEBEB; color:#A32D2D;">Relancé</span>';
+  if (e.statut === 'envoye') return '<span style="font-size:9px; padding:2px 6px; border-radius:10px; background:#FDF3E3; color:#8B6F47;">Envoyé</span>';
+  return '<span style="font-size:9px; padding:2px 6px; border-radius:10px; background:#FDF3E3; color:#8B6F47;">Brouillon</span>';
+}
+
+function afficherArchive() {
+  const archive = chargerArchive();
+  const conteneur = document.getElementById('listeArchive');
+  if (archive.length === 0) {
+    conteneur.innerHTML = '<p style="margin:0; font-size:12px; color:#7D5D3B;">Aucun document envoyé pour l\'instant.</p>';
+    return;
+  }
+  conteneur.innerHTML = archive.map(e => `
+    <div style="border: 1px solid #E8E4DB; border-radius: 6px; padding: 10px; background: white;">
+      <p style="margin:0; font-size:12px; font-weight:600; color:#5C4033;">${e.type === 'facture' ? '🧾' : e.type === 'avoir' ? '↩️' : '📄'} ${echapperHTML(e.numero)} — ${echapperHTML(e.clientNom || 'Client')} — ${echapperHTML(e.totalTTC)} ${badgeStatut(e)}</p>
+      <p style="margin:4px 0 0; font-size:10px; color:#7D5D3B;">Envoyé le ${echapperHTML(e.envoyeLe)}</p>
+      <div style="display:flex; gap:6px; margin-top:6px; flex-wrap: wrap;">
+        <button class="btn-secondaire" style="width:auto; padding:4px 8px; font-size:10px;" onclick="rechargerArchive('${e.id}')">↺ Recharger</button>
+        ${e.type === 'devis' && e.statut !== 'accepte' ? `<button class="btn-secondaire" style="width:auto; padding:4px 8px; font-size:10px;" onclick="relancerClient('${e.id}')">🔔 Relancer</button>` : ''}
+        ${e.type === 'devis' && e.statut !== 'accepte' ? `<button class="btn-secondaire" style="width:auto; padding:4px 8px; font-size:10px;" onclick="marquerAccepte('${e.id}')">✓ Marquer accepté</button>` : ''}
+        ${e.type === 'facture' ? `<button class="btn-secondaire" style="width:auto; padding:4px 8px; font-size:10px;" onclick="creerAvoirDepuisFacture('${e.id}')">📝 Créer un avoir</button>` : ''}
+        ${e.type === 'facture' && e.statut !== 'paye' ? `<button class="btn-secondaire" style="width:auto; padding:4px 8px; font-size:10px; border-color:#2C5F63; color:#2C5F63;" onclick="marquerPayee('${e.id}')">💰 Marquer payée</button>` : ''}
+        ${(e.type === 'facture' || e.type === 'avoir')
+          ? `<span style="font-size:10px; color:#7D5D3B; padding:4px 2px;" title="Conservation légale de 10 ans : suppression bloquée par la base de données">🔒 Conservé (non supprimable)</span>`
+          : `<button class="btn-suppr" style="font-size:10px;" onclick="supprimerArchive('${e.id}')">✕ Supprimer</button>`}
+      </div>
+    </div>
+  `).join('');
+}
+
+function rechargerArchive(id) {
+  const archive = chargerArchive();
+  const e = archive.find(x => x.id === id);
+  if (!e) return;
+  if (!confirm('Recharger ce document effacera les lignes actuelles du formulaire. Continuer ?')) return;
+
+  choisirTypeDocument(e.type);
+  document.getElementById('numDevis').value = e.numero;
+  document.getElementById('dateDevis').value = e.dateDocument;
+  document.getElementById('clientNom').value = e.clientNom;
+  document.getElementById('clientEmail').value = e.clientEmail;
+  document.getElementById('clientAddr').value = e.clientAddr;
+  document.getElementById('clientTel').value = e.clientTel;
+  document.getElementById('projetDesc').value = e.projetDesc;
+  document.getElementById('avoirReference').value = e.avoirReference || '';
+  clientSelectionneId = e.clientId || null;
+  document.getElementById('clientSelect').value = clientSelectionneId || '';
+  document.getElementById('avertissementClient').style.display = clientSelectionneId ? 'none' : 'block';
+  document.getElementById('actionsClientEnregistre').style.display = clientSelectionneId ? 'flex' : 'none';
+
+  document.getElementById('lignesContainer').innerHTML = '';
+  e.lignes.forEach(l => ajouterLigne(l.desc, l.qte, l.unite, l.prix, l.remise));
+  mettreAJourApercu();
+}
+
+function creerAvoirDepuisFacture(id) {
+  const archive = chargerArchive();
+  const facture = archive.find(x => x.id === id && x.type === 'facture');
+  if (!facture) return;
+  if (!confirm(`Créer un avoir annulant/corrigeant la facture ${facture.numero} ? Les lignes seront reprises avec des montants négatifs — à ajuster ensuite si l'avoir n'est que partiel.`)) return;
+
+  choisirTypeDocument('avoir');
+  document.getElementById('clientNom').value = facture.clientNom;
+  document.getElementById('clientEmail').value = facture.clientEmail;
+  document.getElementById('clientAddr').value = facture.clientAddr;
+  document.getElementById('clientTel').value = facture.clientTel;
+  document.getElementById('projetDesc').value = facture.projetDesc;
+  clientSelectionneId = facture.clientId || null;
+  document.getElementById('clientSelect').value = clientSelectionneId || '';
+  document.getElementById('avertissementClient').style.display = clientSelectionneId ? 'none' : 'block';
+  document.getElementById('actionsClientEnregistre').style.display = clientSelectionneId ? 'flex' : 'none';
+  document.getElementById('dateDevis').value = new Date().toISOString().split('T')[0];
+  const dateFactureTexte = facture.dateDocument ? new Date(facture.dateDocument + 'T00:00:00').toLocaleDateString('fr-FR') : '';
+  document.getElementById('avoirReference').value = `${facture.numero}${dateFactureTexte ? ' du ' + dateFactureTexte : ''}`;
+
+  document.getElementById('lignesContainer').innerHTML = '';
+  facture.lignes.forEach(l => {
+    const prixAbsolu = Math.abs(parseFloat(l.prix)) || 0;
+    ajouterLigne(l.desc, l.qte, l.unite, -prixAbsolu, l.remise);
+  });
+  mettreAJourApercu();
+  window.scrollTo(0, 0);
+  alert("L'avoir est prêt dans le formulaire, avec les montants en négatif. Vérifie/ajuste les lignes si l'avoir n'est que partiel, puis télécharge-le ou envoie-le comme un document normal.");
+}
+
+async function supprimerArchive(id) {
+  const archive = chargerArchive();
+  const cible = archive.find(x => x.id === id);
+  if (!cible) return;
+  if (cible.type === 'facture' || cible.type === 'avoir') {
+    alert(`« ${cible.numero} » est un(e) ${cible.type} déjà émis(e) : la conservation légale de 10 ans (Art. L123-22 du Code de commerce) est appliquée au niveau de la base de données, la suppression est bloquée. Émets un avoir pour corriger ce document si besoin.`);
+    return;
+  }
+  if (!confirm("Supprimer définitivement cette entrée de l'archive ?")) return;
+  const { error } = await sb.from('documents').delete().eq('id', id);
+  if (error) { alert('Suppression impossible : ' + error.message); return; }
+  await rafraichirArchiveDepuisSupabase();
+}
+
+async function marquerAccepte(id) {
+  const { error } = await sb.rpc('enregistrer_acceptation', { p_document_id: id });
+  if (error) { alert('Mise à jour impossible : ' + error.message); return; }
+  await rafraichirArchiveDepuisSupabase();
+}
+
+async function marquerPayee(id) {
+  const { error } = await sb.from('documents').update({ statut: 'paye', date_paiement: new Date().toISOString() }).eq('id', id);
+  if (error) {
+    alert("Le statut de paiement n'a pas pu être mis à jour : le contenu d'une facture déjà émise est protégé contre toute modification (conformité légale). (" + error.message + ")");
+    return;
+  }
+  await rafraichirArchiveDepuisSupabase();
+}
+
+function relancerClient(id) {
+  const archive = chargerArchive();
+  const e = archive.find(x => x.id === id);
+  if (!e) return;
+  if (!e.clientEmail) {
+    alert("Aucun email n'a été enregistré pour ce client au moment de l'envoi. Recharge le document et complète son email pour pouvoir le relancer.");
+    return;
+  }
+  const emailEntreprise = document.getElementById('emailEntreprise').value.trim();
+  const nomEnt = document.getElementById('nomEntreprise').value || 'votre entreprise';
+  const sujetTexte = `Rappel — Devis ${e.numero} — ${nomEnt}`;
+  const corpsTexte =
+`Bonjour ${e.clientNom},
+
+Je me permets de revenir vers vous concernant le devis ${e.numero} (${e.totalTTC} TTC), envoyé le ${e.envoyeLe}, resté sans réponse à ce jour.
+
+N'hésitez pas à me faire part de votre décision ou de vos éventuelles questions.
+
+Cordialement,
+${nomEnt}`;
+
+  ouvrirEmailAvecService(e.clientEmail, emailEntreprise, sujetTexte, corpsTexte);
+
+  sb.rpc('enregistrer_relance', { p_document_id: id }).then(({ error }) => {
+    if (error) { console.error('Statut relance non enregistré :', error.message); return; }
+    rafraichirArchiveDepuisSupabase();
+  });
+}
+
+function afficherRelances() {
+  const archive = chargerArchive();
+  const delaiJours = parseInt(document.getElementById('relanceDelaiJours').value) || 7;
+  const maintenant = Date.now();
+  const aRelancer = archive.filter(e => {
+    if (e.type !== 'devis' || e.statut === 'accepte') return false;
+    const joursEcoules = (maintenant - new Date(e.envoyeLeISO || 0).getTime()) / (1000 * 60 * 60 * 24);
+    return joursEcoules >= delaiJours;
+  });
+
+  const banniere = document.getElementById('banniereRelances');
+  if (aRelancer.length === 0) {
+    banniere.style.display = 'none';
+    return;
+  }
+  banniere.style.display = 'flex';
+  banniere.innerHTML = `<p style="margin:0 0 4px; font-size:12px; font-weight:600; color:#A32D2D;">${aRelancer.length} devis sans réponse depuis plus de ${delaiJours} jours :</p>` +
+    aRelancer.map(e => `
+      <div style="border: 1px solid #E8C9C9; background: #FCEBEB; border-radius: 6px; padding: 8px 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+        <span style="font-size:11px; color:#5C4033;">${echapperHTML(e.numero)} — ${echapperHTML(e.clientNom)} — ${echapperHTML(e.totalTTC)}</span>
+        <button class="btn-secondaire" style="width:auto; padding:4px 8px; font-size:10px; white-space:nowrap;" onclick="relancerClient('${e.id}')">🔔 Relancer</button>
+      </div>
+    `).join('');
+}
+
+document.getElementById('relanceDelaiJours').addEventListener('input', afficherRelances);
+
+function mettreAJourCTA(acompteActif, montantAcompte, totalTTC) {
+  const lien = document.getElementById('ctaLien');
+  const cta = document.getElementById('ctaAcceptation');
+  if (typeDocumentActuel === 'avoir') {
+    cta.style.display = 'none';
+    return;
+  }
+  const lienPaiement = document.getElementById('lienPaiement').value.trim();
+  const emailDest = document.getElementById('emailEntreprise').value.trim();
+  const emailClient = document.getElementById('clientEmail').value.trim();
+  const cc = emailClient ? `&cc=${encodeURIComponent(emailClient)}` : '';
+  const numDoc = document.getElementById('numDevis').value;
+  const nomClient = document.getElementById('clientNom').value;
+
+  if (typeDocumentActuel === 'facture') {
+    if (lienPaiement) {
+      document.getElementById('ctaTexte').textContent = `💳 Payer cette facture (${totalTTC.toFixed(2)}€)`;
+      document.getElementById('ctaSousTexte').textContent = 'Paiement sécurisé en ligne';
+      lien.href = lienPaiement;
+      lien.target = '_blank';
+      cta.style.display = 'block';
+    } else {
+      cta.style.display = 'none';
+    }
+    return;
+  }
+
+  cta.style.display = 'block';
+  if (acompteActif) {
+    document.getElementById('ctaTexte').textContent = `✓ Accepter et Payer l'acompte de ${montantAcompte.toFixed(2)}€`;
+    document.getElementById('ctaSousTexte').textContent = lienPaiement ? 'Paiement sécurisé en ligne' : "Clique pour envoyer ton accord par email (à l'artisan et à toi-même) — le solde sera réglé à la livraison / fin de prestation";
+    if (lienPaiement) {
+      lien.href = lienPaiement;
+      lien.target = '_blank';
+    } else {
+      const sujet = encodeURIComponent(`Acceptation du devis ${numDoc} — acompte`);
+      const corps = encodeURIComponent(`Bonjour,\n\nJe confirme accepter le devis ${numDoc} ainsi que le règlement de l'acompte de ${montantAcompte.toFixed(2)}€.\n\nBon pour accord.\n\n${nomClient}`);
+      lien.href = `mailto:${emailDest}?subject=${sujet}&body=${corps}${cc}`;
+      lien.removeAttribute('target');
+    }
+  } else {
+    document.getElementById('ctaTexte').textContent = '✓ Accepter et Signer';
+    document.getElementById('ctaSousTexte').textContent = "Clique pour envoyer ton accord par email (à l'artisan et à toi-même) — fait précéder ta réponse de « Bon pour accord »";
+    const sujet = encodeURIComponent(`Acceptation du devis ${numDoc}`);
+    const corps = encodeURIComponent(`Bonjour,\n\nBon pour accord.\nJ'accepte le devis ${numDoc}.\n\n${nomClient}`);
+    lien.href = `mailto:${emailDest}?subject=${sujet}&body=${corps}${cc}`;
+    lien.removeAttribute('target');
+  }
+}
+
+document.querySelectorAll('input, select, textarea').forEach(el => el.addEventListener('input', mettreAJourApercu));
+document.getElementById('notes').addEventListener('input', sauvegarderNotes);
+CHAMPS_ENTREPRISE.forEach(id => {
+  document.getElementById(id).addEventListener('input', sauvegarderInfosEntreprise);
+  document.getElementById(id).addEventListener('change', sauvegarderInfosEntreprise);
+});
+window.addEventListener('afterprint', incrementerCompteur);
+
+let applicationDemarree = false;
+async function demarrerApplication(entreprise) {
+  document.getElementById('dateDevis').value = new Date().toISOString().split('T')[0];
+  chargerInfosEntreprise(entreprise);
+  chargerDesign();
+  choisirTypeDocument(localStorage.getItem('typeDocumentActuel') || 'devis');
+  const servicePref = localStorage.getItem('servicePrefereMail');
+  if (servicePref) document.getElementById('serviceMail').value = servicePref;
+  const nomSauvegardePref = localStorage.getItem('nomSauvegardePersonnalise');
+  if (nomSauvegardePref) document.getElementById('nomSauvegardePersonnalise').value = nomSauvegardePref;
+  document.getElementById('nomSauvegardePersonnalise').addEventListener('input', function() {
+    localStorage.setItem('nomSauvegardePersonnalise', this.value);
+  });
+  if (!supporteFileSystemAccess()) {
+    document.getElementById('avertissementDossier').style.display = 'block';
+    document.getElementById('statutDossier').textContent = 'Fonction non disponible sur ce navigateur.';
+  }
+  initialiserCompteur();
+  await chargerClients();
+  await rafraichirArchiveDepuisSupabase();
+  if (applicationDemarree) { mettreAJourApercu(); return; }
+  if (!chargerBrouillon()) {
+    ajouterLigne('Conception et dessin', 1, 'forfait', 150);
+    ajouterLigne('Fourniture bois chêne massif', 15, 'kg', 45);
+    ajouterLigne("Façonnage et assemblage (main d'œuvre)", 20, 'h', 50);
+    ajouterLigne('Frais de déplacement', 12, 'km', 0.60);
+  }
+  chargementInitialTermine = true;
+  applicationDemarree = true;
+  mettreAJourApercu();
+}
+</script>
+</body>
+</html>
