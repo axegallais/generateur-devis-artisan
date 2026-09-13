@@ -127,14 +127,14 @@ export default function Home() {
           <span className="copeau" style={{ width: 9, height: 20, background: 'var(--rouille)', borderRadius: '2px 6px 2px 6px', flexShrink: 0 }}></span>
           DEV<span className="x">IX</span><span className="sous-nom">Devis &amp; factures</span>
         </div>
-        <a className="lien-connexion" href="/connexion">Se connecter</a>
+        <a className="lien-connexion" href="/app.html">Se connecter</a>
       </header>
 
       <section className="hero">
         <div>
           <h1>Des devis et factures pros, faits pour ceux qui travaillent seuls.</h1>
           <p className="chapo">Artisan, freelance ou créateur : mentions légales à jour, clients enregistrés, PDF nickel partout — sans y passer ta soirée. Gratuit.</p>
-          <a className="cta-principal" href="/connexion">Créer mon premier devis</a>
+          <a className="cta-principal" href="/app.html">Créer mon premier devis</a>
           <p className="rassurance">Aucune carte bancaire. Ton compte se crée en 30 secondes.</p>
         </div>
         <div style={{ position: 'relative' }}>
@@ -225,7 +225,7 @@ export default function Home() {
       <div className="cta-finale">
         <h2>Ton prochain devis, prêt en moins de 10 minutes</h2>
         <p>Gratuit. Sans engagement. Tes données t&apos;appartiennent.</p>
-        <a className="cta-principal" href="/connexion">Commencer maintenant</a>
+        <a className="cta-principal" href="/app.html">Commencer maintenant</a>
       </div>
 
       <footer><p>Générateur de Devis — outil indépendant pour artisans, freelances et créateurs</p></footer>
