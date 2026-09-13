@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { supabase } from '../lib/supabaseClient';
+import { supabase, supabaseConfigOk } from '../lib/supabaseClient';
 
 export default function Connexion() {
   const router = useRouter();
@@ -103,6 +103,11 @@ export default function Connexion() {
         <div className="carte-connexion">
           <h1>{mode === 'connexion' ? 'Se connecter' : 'Créer un compte'}</h1>
 
+          {!supabaseConfigOk && (
+            <div className="message-erreur">
+              Configuration Supabase manquante (NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY). Vérifie les variables d&apos;environnement Vercel.
+            </div>
+          )}
           {erreur && <div className="message-erreur">{erreur}</div>}
           {messageInfo && <div className="message-info">{messageInfo}</div>}
 
