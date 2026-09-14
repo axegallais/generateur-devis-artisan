@@ -31,6 +31,27 @@
     .conteneur { grid-template-columns: 1fr; }
     #apercuWrapper { position: static; max-height: none; overflow: visible; }
   }
+
+  /* Mode sombre : on inverse toute la page, puis on ré-inverse l'aperçu du document
+     (et les images) pour qu'ils restent toujours d'aspect normal, comme un vrai papier. */
+  body.mode-sombre {
+    filter: invert(1) hue-rotate(180deg);
+    background-color: #1c1c1c;
+  }
+  body.mode-sombre #apercuWrapper,
+  body.mode-sombre .panneauVitrine .pileDocuments img,
+  body.mode-sombre img {
+    filter: invert(1) hue-rotate(180deg);
+  }
+  body.mode-sombre {
+    transition: filter 0.2s ease;
+  }
+  #boutonTheme {
+    width: auto;
+    padding: 6px 12px;
+    font-size: 11px;
+    margin-right: auto;
+  }
   .bloc {
     background: #F9F8F5;
     border-top: 3px solid #8B6F47;
@@ -289,6 +310,7 @@
 
 <div id="appPrincipale" style="display:none;">
 <div id="barreCompte">
+  <button type="button" id="boutonTheme" class="btn-secondaire" onclick="basculerTheme()" title="Change le thème : Auto (selon l'heure) → Clair → Sombre">🌓 Auto</button>
   <span id="emailCompteActif"></span>
   <button type="button" class="btn-secondaire" onclick="seDeconnecter()">Se déconnecter</button>
 </div>
@@ -987,6 +1009,31 @@
 const SUPABASE_URL = 'https://vddpfgycbjnhhatsaxde.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZkZHBmZ3ljYmpuaGhhdHNheGRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5NjA3NTQsImV4cCI6MjEwNDUzNjc1NH0.K201juuy23ZpDHvdhdzhWfMbqmImEinSxhZgYbvEqWQ';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// --- Thème clair / sombre, automatique selon l'heure (20h-7h = sombre), avec bascule manuelle ---
+function estNuit() {
+  const heure = new Date().getHours();
+  return heure >= 20 || heure < 7;
+}
+function appliquerTheme() {
+  const pref = localStorage.getItem('preferenceTheme') || 'auto';
+  const sombre = pref === 'sombre' || (pref === 'auto' && estNuit());
+  document.body.classList.toggle('mode-sombre', sombre);
+  const bouton = document.getElementById('boutonTheme');
+  if (bouton) {
+    if (pref === 'auto') bouton.textContent = sombre ? '🌙 Auto (nuit)' : '☀️ Auto (jour)';
+    else if (pref === 'sombre') bouton.textContent = '🌙 Sombre';
+    else bouton.textContent = '☀️ Clair';
+  }
+}
+function basculerTheme() {
+  const pref = localStorage.getItem('preferenceTheme') || 'auto';
+  const suivant = pref === 'auto' ? 'clair' : (pref === 'clair' ? 'sombre' : 'auto');
+  localStorage.setItem('preferenceTheme', suivant);
+  appliquerTheme();
+}
+appliquerTheme();
+setInterval(appliquerTheme, 60000);
 
 let entrepriseId = null;
 let modeAuth = 'connexion';
