@@ -66,6 +66,7 @@ export default function Home() {
           .section-fonctions { padding: 88px 24px 72px; }
           .section-fonctions .intro { max-width: 52ch; margin-bottom: 36px; }
           .section-fonctions .intro h2 { font-size: 28px; margin-bottom: 12px; }
+          .maquette .sous-total { display: flex; justify-content: space-between; font-size: 11px; color: #6B5A47; padding: 2px 0; }
           .section-fonctions .intro p { color: #6B5A47; font-size: 15.5px; }
           .section-audiences { padding: 8px 24px 72px; }
           .section-audiences .intro { max-width: 46ch; margin: 0 auto 40px; text-align: center; }
@@ -145,13 +146,16 @@ export default function Home() {
             </div>
             <table>
               <tbody>
-                <tr><th>Description</th><th>Qté</th><th>Prix Unitaire</th><th>Total HT</th></tr>
-                <tr><td>Meuble chêne massif</td><td>1</td><td>680,00€</td><td>680,00€</td></tr>
-                <tr><td>Fournitures (bois)</td><td>15 m³</td><td>45,00€</td><td>675,00€</td></tr>
-                <tr><td>Main-d&apos;œuvre</td><td>20 h</td><td>50,00€</td><td>1 000,00€</td></tr>
-              </tbody>
+                <tr><th>Description</th><th>Qté</th><th>Unité</th><th>P.U. HT</th><th>Total HT</th></tr>
+                      <tr><td>Conception et dessin</td><td>1</td><td>forfait</td><td>150,00€</td><td>150,00€</td></tr>
+                      <tr><td>Fourniture bois chêne massif</td><td>15</td><td>m³</td><td>45,00€</td><td>675,00€</td></tr>
+                      <tr><td>Façonnage et assemblage (main d&apos;œuvre)</td><td>20</td><td>h</td><td>50,00€</td><td>1 000,00€</td></tr>
+                      <tr><td>Frais de déplacement</td><td>12</td><td>km</td><td>0,60€</td><td>7,20€</td></tr>
+            </tbody>
             </table>
-            <div className="total"><span>Total TTC</span><span>2 826,00€</span></div>
+                  <div className="sous-total"><span>Total HT</span><span>1 832,20€</span></div>
+                  <div className="sous-total"><span>TVA (20%)</span><span>366,44€</span></div>
+                  <div className="total"><span>Total TTC</span><span>2 198,64€</span></div>
           </div>
           <div className="badge-conforme">✓ Conforme 2026</div>
         </div>
