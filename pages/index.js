@@ -145,10 +145,10 @@ export default function Home() {
             </div>
             <table>
               <tbody>
-                <tr><th>Description</th><th>Qté</th><th>Total HT</th></tr>
-                <tr><td>Meuble chêne massif</td><td>1</td><td>680,00€</td></tr>
-                <tr><td>Fournitures</td><td>15 kg</td><td>675,00€</td></tr>
-                <tr><td>Main-d&apos;œuvre</td><td>20 h</td><td>1 000,00€</td></tr>
+                <tr><th>Description</th><th>Qté</th><th>Prix Unitaire</th><th>Total HT</th></tr>
+                <tr><td>Meuble chêne massif</td><td>1</td><td>680,00€</td><td>680,00€</td></tr>
+                <tr><td>Fournitures (bois)</td><td>15 m³</td><td>45,00€</td><td>675,00€</td></tr>
+                <tr><td>Main-d&apos;œuvre</td><td>20 h</td><td>50,00€</td><td>1 000,00€</td></tr>
               </tbody>
             </table>
             <div className="total"><span>Total TTC</span><span>2 826,00€</span></div>
