@@ -2781,11 +2781,18 @@ async function archiverDocument() {
   return true;
 }
 
-async function voirPDFMobile() {
+  async function voirPDFMobile() {
   const bouton = document.getElementById('boutonVoirPDF');
   const texteOriginal = bouton.textContent;
   bouton.textContent = 'Génération...';
   bouton.disabled = true;
+  const wrapper = document.getElementById('apercuWrapper');
+  const styleOriginal = wrapper.getAttribute('style');
+  wrapper.style.display = 'block';
+  wrapper.style.position = 'fixed';
+  wrapper.style.left = '-9999px';
+  wrapper.style.top = '0';
+  wrapper.style.zIndex = '-1';
   try {
     const blob = await genererPdfBlob();
     const url = URL.createObjectURL(blob);
@@ -2793,11 +2800,11 @@ async function voirPDFMobile() {
   } catch (e) {
     alert("Impossible de générer le PDF : " + e.message);
   } finally {
+    wrapper.setAttribute('style', styleOriginal);
     bouton.textContent = texteOriginal;
     bouton.disabled = false;
   }
 }
-
 function basculerArchive() {
   const liste = document.getElementById('listeArchive');
   const visible = liste.style.display === 'flex';
