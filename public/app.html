@@ -31,7 +31,6 @@
   @media (max-width: 900px) {
     .conteneur { grid-template-columns: 1fr; }
     #apercuWrapper { position: static; max-height: none; overflow: visible; display: none; }
-       #apercuWrapper.mobile-visible { display: block; }
        #boutonVoirPDF { display: inline-flex; }
   }
 
@@ -341,7 +340,7 @@
   </div>
 </div>
 
-  <button type="button" id="boutonVoirPDF" class="btn-secondaire" onclick="basculerApercuMobile()">👁️ Voir le PDF</button>
+  <button type="button" id="boutonVoirPDF" class="btn-secondaire" onclick="voirPDFMobile()">👁️ Voir le PDF</button>
 <!-- FORMULAIRE -->
   <div class="no-print">
     <div style="border-left: 4px solid #8B6F47; padding-left: 16px; margin-bottom: 20px;">
@@ -2782,12 +2781,21 @@ async function archiverDocument() {
   return true;
 }
 
-function basculerApercuMobile() {
-  const wrapper = document.getElementById('apercuWrapper');
+async function voirPDFMobile() {
   const bouton = document.getElementById('boutonVoirPDF');
-  const visible = wrapper.classList.toggle('mobile-visible');
-  bouton.textContent = visible ? '✏️ Retour au formulaire' : '👁️ Voir le PDF';
-  if (visible) wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const texteOriginal = bouton.textContent;
+  bouton.textContent = 'Génération...';
+  bouton.disabled = true;
+  try {
+    const blob = await genererPdfBlob();
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+  } catch (e) {
+    alert("Impossible de générer le PDF : " + e.message);
+  } finally {
+    bouton.textContent = texteOriginal;
+    bouton.disabled = false;
+  }
 }
 
 function basculerArchive() {
