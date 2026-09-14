@@ -345,7 +345,7 @@
 <div id="barreCompte">
   <button type="button" id="boutonTheme" class="btn-secondaire" onclick="basculerTheme()" title="Change le thème : Auto (selon l'heure) → Clair → Sombre">🌓 Auto</button>
   <span id="emailCompteActif"></span>
- <button type="button" id="boutonDashboardFeedback" class="btn-secondaire" onclick="ouvrirDashboardFeedback()" style="display:none;">📊 Retours clients</button>
+<button type="button" id="boutonDashboardFeedback" onclick="ouvrirDashboardFeedback()" style="display:none; position:fixed; bottom:88px; right:20px; z-index:900; background:#5C4033; color:#FBF8F3; border:none; border-radius:999px; padding:14px 22px; font-size:14px; font-weight:700; box-shadow:0 10px 24px -6px rgba(92,64,51,0.5); cursor:pointer; align-items:center; gap:8px;">📊 Retours clients</button> 
   <button type="button" class="btn-secondaire" onclick="seDeconnecter()">Se déconnecter</button>
 </div>
 <div class="conteneur">
@@ -1281,19 +1281,34 @@ async function chargerDashboardFeedback() {
       '<span style="font-size:10px; color:#8A7A64;">' + date + '</span>' +
       '</div>' +
       '<p style="margin:0 0 6px; font-size:13px; color:#2C2C2A; white-space:pre-wrap;">' + messageEchappe + '</p>' +
-      '<div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">' +
+            '<div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">' +
       '<span style="font-size:11px; color:#7D5D3B;">' + emailEchappe + '</span>' +
+      '<div style="display:flex; align-items:center; gap:6px;">' +
       '<select data-feedback-id="' + f.id + '" style="font-size:11px; padding:4px 6px; width:auto;">' +
       '<option value="nouveau"' + (f.statut === 'nouveau' ? ' selected' : '') + '>Nouveau</option>' +
       '<option value="en_cours"' + (f.statut === 'en_cours' ? ' selected' : '') + '>En cours</option>' +
       '<option value="resolu"' + (f.statut === 'resolu' ? ' selected' : '') + '>Résolu</option>' +
       '</select>' +
+      '<button type="button" data-delete-id="' + f.id + '" title="Supprimer ce retour" style="font-size:12px; padding:4px 8px; border-radius:6px; border:1px solid #E3DCCB; background:#FDFBF9; color:#A32D2D; cursor:pointer;">🗑️</button>' +
+      '</div>' +
       '</div>' +
       '</div>';
   }).join('');
   conteneur.querySelectorAll('select[data-feedback-id]').forEach(function(sel) {
     sel.addEventListener('change', function() {
       majStatutFeedback(this.dataset.feedbackId, this.value);
+    });
+  });
+  conteneur.querySelectorAll('button[data-delete-id]').forEach(function(btn) {
+    btn.addEventListener('click', async function() {
+      if (!confirm('Supprimer definitivement ce retour ?')) return;
+      const id = this.dataset.deleteId;
+      const { error } = await sb.from('feedback').delete().eq('id', id);
+      if (error) {
+        alert("Suppression impossible : " + error.message);
+        return;
+      }
+      await chargerDashboardFeedback();
     });
   });
 }
