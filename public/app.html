@@ -25,11 +25,14 @@
     grid-template-columns: 1fr 1fr;
     gap: 24px;
     max-width: 1400px;
-    margin: 0 auto;
+      margin: 0 auto;
   }
+ #boutonVoirPDF { display: none; width: auto; margin-bottom: 14px; }
   @media (max-width: 900px) {
     .conteneur { grid-template-columns: 1fr; }
-    #apercuWrapper { position: static; max-height: none; overflow: visible; }
+    #apercuWrapper { position: static; max-height: none; overflow: visible; display: none; }
+       #apercuWrapper.mobile-visible { display: block; }
+       #boutonVoirPDF { display: inline-flex; }
   }
 
   /* Mode sombre : on inverse toute la page, puis on ré-inverse l'aperçu du document
@@ -338,7 +341,8 @@
   </div>
 </div>
 
-  <!-- FORMULAIRE -->
+  <button type="button" id="boutonVoirPDF" class="btn-secondaire" onclick="basculerApercuMobile()">👁️ Voir le PDF</button>
+<!-- FORMULAIRE -->
   <div class="no-print">
     <div style="border-left: 4px solid #8B6F47; padding-left: 16px; margin-bottom: 20px;">
       <div class="logo-devix-sombre" style="font-size: 28px;">DEV<span class="x">IX</span></div>
@@ -2776,6 +2780,14 @@ async function archiverDocument() {
       if (nbFactures === 4) { document.getElementById('encartAvisPrive').style.display = 'flex'; }
  }
   return true;
+}
+
+function basculerApercuMobile() {
+  const wrapper = document.getElementById('apercuWrapper');
+  const bouton = document.getElementById('boutonVoirPDF');
+  const visible = wrapper.classList.toggle('mobile-visible');
+  bouton.textContent = visible ? '✏️ Retour au formulaire' : '👁️ Voir le PDF';
+  if (visible) wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function basculerArchive() {
