@@ -739,6 +739,29 @@
       <p style="margin: 0; font-size: 10px; color: #7D5D3B;">Chaque devis/facture est archivé automatiquement ici dès que tu cliques sur « Envoyer par email ».</p>
       <div id="listeArchive" style="display: none; max-height: 320px; overflow-y: auto; flex-direction: column; gap: 8px;"></div>
     </div>
+
+    <div class="bloc" style="margin-top: 20px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3>🤖 Relances automatiques</h3>
+        <button class="btn-secondaire" style="width: auto; padding: 6px 12px;" onclick="basculerTableauRelances()">Voir / Masquer</button>
+      </div>
+      <p style="margin: 0; font-size: 10px; color: #7D5D3B;">Chaque jour à 7h, l'outil relance tout seul les devis sans réponse et les factures proches de l'échéance ou en retard. Historique des 50 derniers envois ci-dessous.</p>
+      <div id="statsRelancesAuto" style="display: flex; gap: 8px;">
+        <div style="flex:1; background:#FDFBF9; border:1px solid #E8E4DB; border-radius:6px; padding:8px; text-align:center;">
+          <p style="margin:0; font-size:9px; color:#7D5D3B;">Devis relancés</p>
+          <p id="statDevisRelances" style="margin:2px 0 0; font-size:16px; font-weight:700; color:#5C4033;">–</p>
+        </div>
+        <div style="flex:1; background:#FDFBF9; border:1px solid #E8E4DB; border-radius:6px; padding:8px; text-align:center;">
+          <p style="margin:0; font-size:9px; color:#7D5D3B;">Rappels échéance</p>
+          <p id="statFacturesEcheance" style="margin:2px 0 0; font-size:16px; font-weight:700; color:#5C4033;">–</p>
+        </div>
+        <div style="flex:1; background:#FDFBF9; border:1px solid #E8E4DB; border-radius:6px; padding:8px; text-align:center;">
+          <p style="margin:0; font-size:9px; color:#7D5D3B;">Retards relancés</p>
+          <p id="statFacturesRetard" style="margin:2px 0 0; font-size:16px; font-weight:700; color:#5C4033;">–</p>
+        </div>
+      </div>
+      <div id="listeRelancesAuto" style="display: none; max-height: 320px; overflow-y: auto; flex-direction: column; gap: 8px;"></div>
+    </div>
   </div>
 
   <!-- APERÇU -->
@@ -2359,6 +2382,64 @@ function afficherArchive() {
   `).join('');
 }
 
+let relancesAutoCache = [];
+
+async function chargerRelancesAuto() {
+  if (!entrepriseId) { relancesAutoCache = []; return; }
+  const { data, error } = await sb
+    .from('relances_automatiques')
+    .select('id, type_relance, destinataire, succes, erreur, created_at, documents(numero, type)')
+    .eq('entreprise_id', entrepriseId)
+    .order('created_at', { ascending: false })
+    .limit(50);
+  if (error) { console.error('Chargement relances automatiques impossible :', error.message); return; }
+  relancesAutoCache = data || [];
+  afficherStatsRelancesAuto();
+}
+
+function afficherStatsRelancesAuto() {
+  const reussies = relancesAutoCache.filter(r => r.succes);
+  document.getElementById('statDevisRelances').textContent = reussies.filter(r => r.type_relance === 'devis_relance').length;
+  document.getElementById('statFacturesEcheance').textContent = reussies.filter(r => r.type_relance === 'facture_echeance_proche').length;
+  document.getElementById('statFacturesRetard').textContent = reussies.filter(r => r.type_relance === 'facture_retard').length;
+}
+
+function libelleTypeRelance(type) {
+  if (type === 'devis_relance') return '🔔 Relance devis';
+  if (type === 'facture_echeance_proche') return '⏳ Rappel échéance';
+  if (type === 'facture_retard') return '⚠️ Facture en retard';
+  return type;
+}
+
+function basculerTableauRelances() {
+  const liste = document.getElementById('listeRelancesAuto');
+  const visible = liste.style.display === 'flex';
+  liste.style.display = visible ? 'none' : 'flex';
+  if (!visible) afficherTableauRelancesAuto();
+}
+
+function afficherTableauRelancesAuto() {
+  const conteneur = document.getElementById('listeRelancesAuto');
+  if (relancesAutoCache.length === 0) {
+    conteneur.innerHTML = '<p style="margin:0; font-size:12px; color:#7D5D3B;">Aucune relance automatique envoyée pour l\'instant.</p>';
+    return;
+  }
+  conteneur.innerHTML = relancesAutoCache.map(r => {
+    const doc = r.documents;
+    const dateEnvoi = new Date(r.created_at).toLocaleString('fr-FR');
+    const statutBadge = r.succes
+      ? '<span style="font-size:9px; padding:2px 6px; border-radius:10px; background:#E8F0E9; color:#2C5F63;">✓ Envoyée</span>'
+      : '<span style="font-size:9px; padding:2px 6px; border-radius:10px; background:#FCEBEB; color:#A32D2D;">✕ Échec</span>';
+    return `
+    <div style="border: 1px solid #E8E4DB; border-radius: 6px; padding: 10px; background: white;">
+      <p style="margin:0; font-size:12px; font-weight:600; color:#5C4033;">${libelleTypeRelance(r.type_relance)} ${doc ? '— ' + echapperHTML(doc.numero) : ''} ${statutBadge}</p>
+      <p style="margin:4px 0 0; font-size:10px; color:#7D5D3B;">À ${echapperHTML(r.destinataire || '?')} — ${echapperHTML(dateEnvoi)}</p>
+      ${!r.succes && r.erreur ? `<p style="margin:4px 0 0; font-size:10px; color:#A32D2D;">${echapperHTML(r.erreur)}</p>` : ''}
+    </div>
+  `;
+  }).join('');
+}
+
 function rechargerArchive(id) {
   const archive = chargerArchive();
   const e = archive.find(x => x.id === id);
@@ -2577,6 +2658,7 @@ async function demarrerApplication(entreprise) {
   initialiserCompteur();
   await chargerClients();
   await rafraichirArchiveDepuisSupabase();
+  await chargerRelancesAuto();
   if (applicationDemarree) { mettreAJourApercu(); return; }
   if (!chargerBrouillon()) {
     ajouterLigne('Conception et dessin', 1, 'forfait', 150);
