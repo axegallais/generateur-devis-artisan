@@ -346,6 +346,7 @@
         <h3>Votre Entreprise</h3>
         <span style="font-size: 10px; color: #7D5D3B;">✓ Sauvegardé auto.</span>
       </div>
+      <button type="button" class="btn-secondaire" style="background-color: #2C5F63; color: white; border: none;" onclick="ouvrirAssistantDemarrage()">🧙 Assistant de démarrage rapide</button>
       <div>
         <label>Logo</label>
         <div id="logoPreview" style="width: 80px; height: 80px; border: 2px dashed #8B6F47; border-radius: 6px; display: flex; align-items: center; justify-content: center; background-color: #FDFBF9; overflow: hidden; margin-top: 6px;">
@@ -570,6 +571,68 @@
       <div id="champAdresseLivraison" style="display: none;">
         <label>Adresse de livraison<span class="oblig">*</span></label>
         <input id="clientAddrLivraison" type="text" placeholder="Adresse de livraison" style="margin-top:4px;" />
+      </div>
+    </div>
+
+    <div id="modalAssistant" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1100; align-items: center; justify-content: center;">
+      <div style="background: #F9F8F5; border-top: 4px solid #2C5F63; border-radius: 8px; padding: 28px; width: 100%; max-width: 420px;">
+        <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 4px;">
+          <h3 style="margin:0;">🧙 Assistant de démarrage</h3>
+          <span id="assistantEtapeLabel" style="font-size: 11px; color: #7D5D3B;">Étape 1/4</span>
+        </div>
+        <div style="height: 4px; background: #E8E4DB; border-radius: 2px; margin: 10px 0 20px;">
+          <div id="assistantBarreProgression" style="height: 4px; width: 25%; background: #2C5F63; border-radius: 2px; transition: width 0.2s;"></div>
+        </div>
+
+        <div id="assistantEtape1">
+          <p style="margin: 0 0 14px; font-size: 14px; font-weight: 600; color: #5C4033;">Ton activité est en nom propre ou en société ?</p>
+          <div style="display:flex; flex-direction:column; gap: 8px;">
+            <button type="button" class="choix-template" style="text-align:left; padding: 12px;" onclick="choixAssistantStatut('Auto-entrepreneur')">Auto-entrepreneur / micro-entreprise</button>
+            <button type="button" class="choix-template" style="text-align:left; padding: 12px;" onclick="choixAssistantStatut('EI')">Entreprise individuelle (EI)</button>
+            <button type="button" class="choix-template" style="text-align:left; padding: 12px;" onclick="choixAssistantStatut('EURL')">EURL</button>
+            <button type="button" class="choix-template" style="text-align:left; padding: 12px;" onclick="choixAssistantStatut('SARL')">SARL</button>
+            <button type="button" class="choix-template" style="text-align:left; padding: 12px;" onclick="choixAssistantStatut('SAS')">SAS</button>
+            <button type="button" class="choix-template" style="text-align:left; padding: 12px;" onclick="choixAssistantStatut('SASU')">SASU</button>
+          </div>
+        </div>
+
+        <div id="assistantEtape2" style="display:none;">
+          <p style="margin: 0 0 14px; font-size: 14px; font-weight: 600; color: #5C4033;">Tu factures de la TVA à tes clients ?</p>
+          <p style="margin: 0 0 14px; font-size: 11px; color: #7D5D3B;">Si tu es en franchise en base (beaucoup de micro-entreprises), tu ne factures pas de TVA.</p>
+          <div style="display:flex; flex-direction:column; gap: 8px;">
+            <button type="button" class="choix-template" style="text-align:left; padding: 12px;" onclick="choixAssistantTVA(true)">Oui, je facture de la TVA (20% par défaut)</button>
+            <button type="button" class="choix-template" style="text-align:left; padding: 12px;" onclick="choixAssistantTVA(false)">Non, je suis en franchise en base</button>
+          </div>
+        </div>
+
+        <div id="assistantEtape3" style="display:none;">
+          <p style="margin: 0 0 14px; font-size: 14px; font-weight: 600; color: #5C4033;">Ton activité touche à des travaux du bâtiment (construction, rénovation, agencement) ?</p>
+          <p style="margin: 0 0 14px; font-size: 11px; color: #7D5D3B;">Dans ce cas, l'assurance décennale doit apparaître sur tes devis.</p>
+          <div style="display:flex; flex-direction:column; gap: 8px;">
+            <button type="button" class="choix-template" style="text-align:left; padding: 12px;" onclick="choixAssistantBatiment(true)">Oui, j'interviens sur du bâti</button>
+            <button type="button" class="choix-template" style="text-align:left; padding: 12px;" onclick="choixAssistantBatiment(false)">Non, pas concerné</button>
+          </div>
+        </div>
+
+        <div id="assistantEtape4" style="display:none;">
+          <p style="margin: 0 0 14px; font-size: 14px; font-weight: 600; color: #5C4033;">Délai de paiement habituel pour tes factures ?</p>
+          <div style="display:flex; flex-direction:column; gap: 8px;">
+            <button type="button" class="choix-template" style="text-align:left; padding: 12px;" onclick="choixAssistantDelai(0)">À réception (0 jour)</button>
+            <button type="button" class="choix-template" style="text-align:left; padding: 12px;" onclick="choixAssistantDelai(15)">15 jours</button>
+            <button type="button" class="choix-template" style="text-align:left; padding: 12px;" onclick="choixAssistantDelai(30)">30 jours (le plus courant)</button>
+            <button type="button" class="choix-template" style="text-align:left; padding: 12px;" onclick="choixAssistantDelai(45)">45 jours</button>
+          </div>
+        </div>
+
+        <div id="assistantEtapeFin" style="display:none;">
+          <p style="margin: 0 0 8px; font-size: 14px; font-weight: 600; color: #5C4033;">✓ C'est prêt !</p>
+          <p style="margin: 0 0 20px; font-size: 12.5px; color: #7D5D3B;">J'ai pré-rempli ces réglages. Tu peux les ajuster à tout moment dans les blocs "Votre Entreprise" et "TVA" à gauche. Remplis maintenant ton nom, ton SIRET et tes coordonnées pour finaliser.</p>
+          <button type="button" class="btn-principal" style="background-color:#2C5F63;" onclick="fermerAssistantDemarrage()">Terminer</button>
+        </div>
+
+        <div style="display:flex; justify-content: space-between; margin-top: 18px;">
+          <button type="button" class="lienBascule" style="text-decoration:underline; background:none; border:none; color:#8B6F47; font-size:12px; cursor:pointer; padding:0;" onclick="fermerAssistantDemarrage()">Passer cette étape</button>
+        </div>
       </div>
     </div>
 
@@ -1432,6 +1495,78 @@ function chargerAssurances() {
   document.getElementById('assurancesActives').checked = actif;
   document.getElementById('champsAssurances').style.display = actif ? 'flex' : 'none';
 }
+
+let assistantReponses = {};
+
+function ouvrirAssistantDemarrage() {
+  assistantReponses = {};
+  ['assistantEtape1','assistantEtape2','assistantEtape3','assistantEtape4','assistantEtapeFin'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+  document.getElementById('assistantEtape1').style.display = 'block';
+  document.getElementById('assistantEtapeLabel').textContent = 'Étape 1/4';
+  document.getElementById('assistantBarreProgression').style.width = '25%';
+  document.getElementById('modalAssistant').style.display = 'flex';
+}
+
+function fermerAssistantDemarrage() {
+  document.getElementById('modalAssistant').style.display = 'none';
+  localStorage.setItem('assistantDemarrageVu', '1');
+}
+
+function allerEtapeAssistant(numero) {
+  ['assistantEtape1','assistantEtape2','assistantEtape3','assistantEtape4','assistantEtapeFin'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+  if (numero <= 4) {
+    document.getElementById('assistantEtape' + numero).style.display = 'block';
+    document.getElementById('assistantEtapeLabel').textContent = 'Étape ' + numero + '/4';
+    document.getElementById('assistantBarreProgression').style.width = (numero * 25) + '%';
+  } else {
+    document.getElementById('assistantEtapeFin').style.display = 'block';
+    document.getElementById('assistantEtapeLabel').textContent = 'Terminé';
+    document.getElementById('assistantBarreProgression').style.width = '100%';
+  }
+}
+
+function choixAssistantStatut(statut) {
+  assistantReponses.statut = statut;
+  document.getElementById('statutJuridique').value = statut;
+  document.getElementById('champCapitalSocial').style.display = FORMES_AVEC_CAPITAL.includes(statut) ? 'block' : 'none';
+  if (statut === 'Auto-entrepreneur') {
+    document.getElementById('franchiseTVA').checked = true;
+    document.getElementById('tauxTVAContainer').style.display = 'none';
+    allerEtapeAssistant(3);
+  } else {
+    allerEtapeAssistant(2);
+  }
+  mettreAJourApercu();
+  sauvegarderInfosEntreprise();
+}
+
+function choixAssistantTVA(factureTVA) {
+  document.getElementById('franchiseTVA').checked = !factureTVA;
+  document.getElementById('tauxTVAContainer').style.display = factureTVA ? 'block' : 'none';
+  if (factureTVA) document.getElementById('tauxTVA').value = 20;
+  allerEtapeAssistant(3);
+  mettreAJourApercu();
+}
+
+function choixAssistantBatiment(concerne) {
+  document.getElementById('assurancesActives').checked = concerne;
+  document.getElementById('champsAssurances').style.display = concerne ? 'flex' : 'none';
+  localStorage.setItem('assurancesActives', concerne ? '1' : '0');
+  allerEtapeAssistant(4);
+  mettreAJourApercu();
+}
+
+function choixAssistantDelai(jours) {
+  document.getElementById('delaiPaiementJours').value = jours;
+  allerEtapeAssistant(5);
+  mettreAJourApercu();
+  sauvegarderInfosEntreprise();
+}
+
 document.getElementById('franchiseTVA').addEventListener('change', function() {
   document.getElementById('tauxTVAContainer').style.display = this.checked ? 'none' : 'block';
   mettreAJourApercu();
@@ -2660,6 +2795,9 @@ async function demarrerApplication(entreprise) {
   await rafraichirArchiveDepuisSupabase();
   await chargerRelancesAuto();
   if (applicationDemarree) { mettreAJourApercu(); return; }
+  if (!entreprise.nom && localStorage.getItem('assistantDemarrageVu') !== '1') {
+    ouvrirAssistantDemarrage();
+  }
   if (!chargerBrouillon()) {
     ajouterLigne('Conception et dessin', 1, 'forfait', 150);
     ajouterLigne('Fourniture bois chêne massif', 15, 'kg', 45);
