@@ -321,6 +321,23 @@
   <button type="button" class="btn-secondaire" onclick="seDeconnecter()">Se déconnecter</button>
 </div>
 <div class="conteneur">
+ <div id="encartAvisPrive" class="bloc" style="display:none; grid-column:1/-1; align-items:center; text-align:center; gap:10px;">
+  <h3 style="margin:0;">Comment se passe ton expérience avec DEVIX ?</h3>
+  <p style="margin:0; font-size:12px; color:#7D5D3B;">Tu viens de générer ta 4e facture — un avis rapide nous aide énormément (visible uniquement par l'équipe DEVIX, jamais publié).</p>
+  <div id="etoilesAvisPrive" style="display:flex; gap:6px; font-size:30px; cursor:pointer; color:#D4A017;">
+    <span data-etoile="1" onclick="choisirEtoileAvisPrive(1)">☆</span>
+    <span data-etoile="2" onclick="choisirEtoileAvisPrive(2)">☆</span>
+    <span data-etoile="3" onclick="choisirEtoileAvisPrive(3)">☆</span>
+    <span data-etoile="4" onclick="choisirEtoileAvisPrive(4)">☆</span>
+    <span data-etoile="5" onclick="choisirEtoileAvisPrive(5)">☆</span>
+  </div>
+  <textarea id="commentaireAvisPrive" placeholder="Un commentaire ? (optionnel)" style="height:60px; resize:none; max-width:400px;"></textarea>
+  <div style="display:flex; gap:8px;">
+    <button type="button" class="btn-secondaire" onclick="fermerEncartAvis(true)">Plus tard</button>
+    <button type="button" class="btn-principal" id="boutonEnvoyerAvisPrive" onclick="envoyerAvisPrive()">Envoyer mon avis</button>
+  </div>
+</div>
+
   <!-- FORMULAIRE -->
   <div class="no-print">
     <div style="border-left: 4px solid #8B6F47; padding-left: 16px; margin-bottom: 20px;">
@@ -1279,11 +1296,13 @@ async function chargerDashboardFeedback() {
   conteneur.innerHTML = data.map(function(f) {
     const date = new Date(f.created_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     const label = emojis[f.type] || f.type;
+   const noteEtoiles = f.note ? '★'.repeat(f.note) + '☆'.repeat(5 - f.note) : '';
     const messageEchappe = (f.message || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const emailEchappe = (f.user_email || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     return '<div style="border:1px solid #E3DCCB; border-radius:6px; padding:10px 12px;">' +
       '<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:4px;">' +
       '<span style="font-size:11px; font-weight:600; color:#8B6F47;">' + label + '</span>' +
+     (noteEtoiles ? '<span style="color:#D4A017; font-size:11px; margin-left:6px;">' + noteEtoiles + '</span>' : '') +
       '<span style="font-size:10px; color:#8A7A64;">' + date + '</span>' +
       '</div>' +
       '<p style="margin:0 0 6px; font-size:13px; color:#2C2C2A; white-space:pre-wrap;">' + messageEchappe + '</p>' +
@@ -1322,6 +1341,52 @@ async function chargerDashboardFeedback() {
 async function majStatutFeedback(id, nouveauStatut) {
   await sb.from('feedback').update({ statut: nouveauStatut }).eq('id', id);
 }
+ 
+let noteAvisPriveSelectionnee = 0;
+
+function choisirEtoileAvisPrive(n) {
+  noteAvisPriveSelectionnee = n;
+  document.querySelectorAll('#etoilesAvisPrive span').forEach(function(s) {
+    const v = parseInt(s.dataset.etoile, 10);
+    s.textContent = v <= n ? '★' : '☆';
+  });
+}
+
+function fermerEncartAvis(reporter) {
+  document.getElementById('encartAvisPrive').style.display = 'none';
+  if (!reporter) localStorage.setItem('avisPriveDemande', '1');
+}
+
+async function envoyerAvisPrive() {
+  if (!noteAvisPriveSelectionnee) {
+    alert("Choisis une note avant d'envoyer.");
+    return;
+  }
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+  const bouton = document.getElementById('boutonEnvoyerAvisPrive');
+  bouton.disabled = true;
+  bouton.textContent = 'Envoi...';
+  const { error } = await sb.from('feedback').insert({
+    user_id: user.id,
+    entreprise_id: entrepriseId,
+    user_email: user.email,
+    type: 'avis',
+    note: noteAvisPriveSelectionnee,
+    message: document.getElementById('commentaireAvisPrive').value.trim() || null,
+    page_contexte: 'avis-4e-facture'
+  });
+  bouton.disabled = false;
+  bouton.textContent = 'Envoyer mon avis';
+  if (error) {
+    alert("Impossible d'envoyer ton avis : " + error.message);
+    return;
+  }
+  localStorage.setItem('avisPriveDemande', '1');
+  document.getElementById('encartAvisPrive').innerHTML = '<p style="margin:0; text-align:center; font-weight:600; color:#2C5F63;">Merci beaucoup pour ton retour ! 🙏</p>';
+  setTimeout(function() { document.getElementById('encartAvisPrive').style.display = 'none'; }, 2000);
+}
+
 
 
 
@@ -2706,6 +2771,10 @@ async function archiverDocument() {
   if (erreurEnvoi) console.error('Tracking envoi non enregistré :', erreurEnvoi.message);
 
   await rafraichirArchiveDepuisSupabase();
+ if (typeDocumentActuel === 'facture' && localStorage.getItem('avisPriveDemande') !== '1') {
+      const nbFactures = archiveCache.filter(function(d) { return d.type === 'facture'; }).length;
+      if (nbFactures === 4) { document.getElementById('encartAvisPrive').style.display = 'flex'; }
+ }
   return true;
 }
 
