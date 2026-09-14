@@ -219,7 +219,7 @@
   #ecranAuth .messageAuth.erreur { color: #A32D2D; }
   #ecranAuth .messageAuth.info { color: #2C5F63; }
   #ecranAuth .lienBascule { background: none; border: none; color: #8B6F47; font-size: 12px; text-decoration: underline; cursor: pointer; padding: 0; margin-top: 20px; }
-  #barreCompte { display: flex; justify-content: flex-end; align-items: center; gap: 10px; max-width: 1400px; margin: 0 auto 12px; }
+  #barreCompte { display: flex; justify-content: flex-end; align-items: center; gap: 10px; max-width: 1400px; margin: 0 auto 12px; flex-wrap: wrap; }
   #barreCompte span { font-size: 11px; color: #7D5D3B; }
   #barreCompte button { width: auto; padding: 6px 12px; font-size: 11px; }
   @media print {
@@ -320,6 +320,9 @@
 <div id="barreCompte">
   <button type="button" id="boutonTheme" class="btn-secondaire" onclick="basculerTheme()" title="Change le thème : Auto (selon l'heure) → Clair → Sombre">🌓 Auto</button>
   <span id="emailCompteActif"></span>
+ <button type="button" class="btn-secondaire" onclick="ouvrirProfil()">👤 Profil</button>
+  <button type="button" class="btn-secondaire" onclick="ouvrirArchiveDevis()">📄 Archive devis</button>
+  <button type="button" class="btn-secondaire" onclick="ouvrirArchiveFactures()">🧾 Archive factures/avoirs</button>
   <button type="button" class="btn-secondaire" onclick="seDeconnecter()">Se déconnecter</button>
 </div>
 <div class="conteneur">
@@ -392,7 +395,7 @@
       </select>
     </div>
 
-    <div class="bloc">
+    <div class="bloc" id="blocProfil">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <h3>Votre Entreprise</h3>
         <span style="font-size: 10px; color: #7D5D3B;">✓ Sauvegardé auto.</span>
@@ -845,9 +848,9 @@
       </div>
     </div>
 
-    <div class="bloc" style="margin-top: 20px;">
+    <div class="bloc" id="blocArchive" style="margin-top: 20px;">
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h3>📁 Archive des envois</h3>
+        <h3 id="titreArchive">📁 Archive des envois</h3>
         <button class="btn-secondaire" style="width: auto; padding: 6px 12px;" onclick="basculerArchive()">Voir / Masquer</button>
       </div>
       <p style="margin: 0; font-size: 10px; color: #7D5D3B;">Chaque devis/facture est archivé automatiquement ici dès que tu cliques sur « Envoyer par email ».</p>
@@ -2805,11 +2808,35 @@ async function archiverDocument() {
     bouton.disabled = false;
   }
 }
+let filtreArchiveActuel = null;
+
 function basculerArchive() {
   const liste = document.getElementById('listeArchive');
   const visible = liste.style.display === 'flex';
+  filtreArchiveActuel = null;
+  document.getElementById('titreArchive').textContent = '📁 Archive des envois';
   liste.style.display = visible ? 'none' : 'flex';
   if (!visible) afficherArchive();
+}
+
+function ouvrirProfil() {
+  document.getElementById('blocProfil').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function ouvrirArchiveDevis() {
+  filtreArchiveActuel = ['devis'];
+  document.getElementById('titreArchive').textContent = '📁 Archive des devis';
+  document.getElementById('listeArchive').style.display = 'flex';
+  afficherArchive();
+  document.getElementById('blocArchive').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function ouvrirArchiveFactures() {
+  filtreArchiveActuel = ['facture', 'avoir'];
+  document.getElementById('titreArchive').textContent = '📁 Archive des factures/avoirs';
+  document.getElementById('listeArchive').style.display = 'flex';
+  afficherArchive();
+  document.getElementById('blocArchive').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function badgeStatut(e) {
@@ -2823,7 +2850,7 @@ function badgeStatut(e) {
 }
 
 function afficherArchive() {
-  const archive = chargerArchive();
+  const archive = chargerArchive().filter(function(e) { return !filtreArchiveActuel || filtreArchiveActuel.includes(e.type); });
   const conteneur = document.getElementById('listeArchive');
   if (archive.length === 0) {
     conteneur.innerHTML = '<p style="margin:0; font-size:12px; color:#7D5D3B;">Aucun document envoyé pour l\'instant.</p>';
