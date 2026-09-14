@@ -63,7 +63,9 @@ export default async function handler(req, res) {
   try {
     const secretAttendu = process.env.CRON_SECRET;
     const autorisation = req.headers.authorization;
-    if (secretAttendu && autorisation !== ('Bearer ' + secretAttendu)) {
+    const secretQuery = req.query.secret;
+    const autorise = !secretAttendu || autorisation === ('Bearer ' + secretAttendu) || secretQuery === secretAttendu;
+    if (!autorise) {
       return res.status(401).json({ error: 'Non autorise' });
     }
 
@@ -233,7 +235,6 @@ export default async function handler(req, res) {
 
     return res.status(200).json(resultat);
   } catch (err) {
-    console.error('Erreur cron relances:', err);
-    return res.status(500).json({ error: err.message, stack: err.stack });
+    return res.status(500).json({ error: (err && err.message) || String(err), stack: err && err.stack });
   }
 }
