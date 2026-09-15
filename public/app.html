@@ -1052,6 +1052,21 @@
 </div>
 <!-- /appPrincipale -->
  </div>
+ <footer id="piedDePage" style="max-width:900px; margin:24px auto 12px; padding:0 24px; text-align:center; font-size:11px; color:#8A7A64;">
+  <a href="/mentions-legales" style="color:#8A7A64; text-decoration:underline; margin:0 6px;">Mentions légales</a>·
+  <a href="/cgu" style="color:#8A7A64; text-decoration:underline; margin:0 6px;">CGU</a>·
+  <a href="/cgv" style="color:#8A7A64; text-decoration:underline; margin:0 6px;">CGV</a>·
+  <a href="/confidentialite" style="color:#8A7A64; text-decoration:underline; margin:0 6px;">Confidentialité (RGPD)</a>
+  <p style="margin:6px 0 0;">© 2026<span id="anneeFinFooter"></span> DEV-IX</p>
+</footer>
+<script>
+(function() {
+  var y = new Date().getFullYear();
+  var el = document.getElementById('anneeFinFooter');
+  if (el) el.textContent = y > 2026 ? '–' + y : '';
+})();
+</script>
+
 
 <button type="button" id="boutonFeedback" onclick="ouvrirModalFeedback()" style="display:none; position:fixed; bottom:20px; right:20px; z-index:900; background:#8B6F47; color:#FBF8F3; border:none; border-radius:999px; padding:18px 28px; font-size:17px; font-weight:700; box-shadow:0 10px 28px -6px rgba(92,64,51,0.55); cursor:pointer; align-items:center; gap:9px;">💬 Feedback</button>
 <div id="modalFeedback" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:1100; align-items:center; justify-content:center;">
