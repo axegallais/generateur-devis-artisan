@@ -1037,6 +1037,12 @@
         <button class="btn-secondaire" style="width: auto; padding: 6px 12px;" onclick="basculerArchive()">Voir / Masquer</button>
       </div>
       <p style="margin: 0; font-size: 10px; color: #7D5D3B;">Chaque devis/facture est archivé automatiquement ici dès que tu cliques sur « Envoyer par email ».</p>
+   <div style="display:flex; gap:6px; flex-wrap:wrap; margin:8px 0;">
+        <input type="text" id="rechercheArchiveTexte" placeholder="Client, N° devis/facture/avoir..." style="flex:1; min-width:160px;" onkeydown="if(event.key==='Enter') rechercherArchive();" />
+        <input type="date" id="rechercheArchiveDate" style="width:auto;" />
+        <button type="button" class="btn-secondaire" style="width:auto; padding:6px 12px;" onclick="rechercherArchive()">🔍 Rechercher</button>
+        <button type="button" class="btn-secondaire" style="width:auto; padding:6px 12px;" onclick="reinitialiserRechercheArchive()">✕ Réinitialiser</button>
+      </div>
       <div id="listeArchive" style="display: none; max-height: 320px; overflow-y: auto; flex-direction: column; gap: 8px;"></div>
   </div>
 </div>
@@ -2641,7 +2647,7 @@ function ligneVersDoc(row) {
 
 async function rafraichirArchiveDepuisSupabase() {
   if (!entrepriseId) { archiveCache = []; afficherArchive(); afficherBilan(); return; }
-  const { data, error } = await sb.from('documents').select('*').eq('entreprise_id', entrepriseId).order('created_at', { ascending: false }).limit(300);
+    const { data, error } = await sb.from('documents').select('*').eq('entreprise_id', entrepriseId).order('created_at', { ascending: false }).limit(1000);
   if (error) { console.error('Chargement archive impossible :', error.message); return; }
   archiveCache = (data || []).map(ligneVersDoc);
   afficherArchive();
@@ -2876,15 +2882,45 @@ function badgeStatut(e) {
 
 function afficherArchive() {
   const archive = chargerArchive().filter(function(e) { return !filtreArchiveActuel || filtreArchiveActuel.includes(e.type); });
+  afficherListeArchive(archive);
+}
+
+async function rechercherArchive() {
+  const texte = document.getElementById('rechercheArchiveTexte').value.trim();
+  const date = document.getElementById('rechercheArchiveDate').value;
+  const conteneur = document.getElementById('listeArchive');
+  conteneur.style.display = 'flex';
+  if (!texte && !date) { afficherArchive(); return; }
+  conteneur.innerHTML = '<p style="margin:0; font-size:12px; color:#7D5D3B;">Recherche...</p>';
+  let requete = sb.from('documents').select('*').eq('entreprise_id', entrepriseId);
+  if (filtreArchiveActuel) requete = requete.in('type', filtreArchiveActuel);
+  if (texte) requete = requete.or('client_nom.ilike.%' + texte + '%,numero.ilike.%' + texte + '%');
+  if (date) requete = requete.eq('date_document', date);
+  requete = requete.order('created_at', { ascending: false }).limit(500);
+  const { data, error } = await requete;
+  if (error) {
+    conteneur.innerHTML = '<p style="margin:0; font-size:12px; color:#A32D2D;">Erreur de recherche : ' + error.message + '</p>';
+    return;
+  }
+  afficherListeArchive((data || []).map(ligneVersDoc));
+}
+
+function reinitialiserRechercheArchive() {
+  document.getElementById('rechercheArchiveTexte').value = '';
+  document.getElementById('rechercheArchiveDate').value = '';
+  afficherArchive();
+}
+
+function afficherListeArchive(archive) {
   const conteneur = document.getElementById('listeArchive');
   if (archive.length === 0) {
-    conteneur.innerHTML = '<p style="margin:0; font-size:12px; color:#7D5D3B;">Aucun document envoyé pour l\'instant.</p>';
+    conteneur.innerHTML = '<p style="margin:0; font-size:12px; color:#7D5D3B;">Aucun document trouvé.</p>';
     return;
   }
   conteneur.innerHTML = archive.map(e => `
     <div style="border: 1px solid #E8E4DB; border-radius: 6px; padding: 10px; background: white;">
       <p style="margin:0; font-size:12px; font-weight:600; color:#5C4033;">${e.type === 'facture' ? '🧾' : e.type === 'avoir' ? '↩️' : '📄'} ${echapperHTML(e.numero)} — ${echapperHTML(e.clientNom || 'Client')} — ${echapperHTML(e.totalTTC)} ${badgeStatut(e)}</p>
-      <p style="margin:4px 0 0; font-size:10px; color:#7D5D3B;">Envoyé le ${echapperHTML(e.envoyeLe)}</p>
+      <p style="margin:4px 0 0; font-size:10px; color:#7D5D3B;">Date du document : ${e.dateDocument ? new Date(e.dateDocument).toLocaleDateString('fr-FR') : '?'} — Envoyé le ${echapperHTML(e.envoyeLe)}</p>
       <div style="display:flex; gap:6px; margin-top:6px; flex-wrap: wrap;">
         <button class="btn-secondaire" style="width:auto; padding:4px 8px; font-size:10px;" onclick="rechargerArchive('${e.id}')">↺ Recharger</button>
         ${e.type === 'devis' && e.statut !== 'accepte' ? `<button class="btn-secondaire" style="width:auto; padding:4px 8px; font-size:10px;" onclick="relancerClient('${e.id}')">🔔 Relancer</button>` : ''}
@@ -2898,6 +2934,7 @@ function afficherArchive() {
     </div>
   `).join('');
 }
+
 
 let relancesAutoCache = [];
 
