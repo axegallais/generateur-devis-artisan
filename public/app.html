@@ -2259,73 +2259,89 @@ function mettreAJourNomFichierExport() {
 
 async function genererPdfDocument() {
   const element = document.getElementById('apercu');
+  const wrapper = document.getElementById('apercuWrapper');
+  const wrapperStyleOriginal = wrapper ? wrapper.getAttribute('style') : null;
+  if (wrapper) {
+    wrapper.style.display = 'block';
+    wrapper.style.position = 'fixed';
+    wrapper.style.left = '-9999px';
+    wrapper.style.top = '0';
+    wrapper.style.zIndex = '-1';
+  }
   const largeurOriginale = element.style.width;
   const maxLargeurOriginale = element.style.maxWidth;
   element.style.width = '794px';
   element.style.maxWidth = '794px';
 
-  await new Promise(r => setTimeout(r, 100));
+  try {
+    await new Promise(r => setTimeout(r, 100));
 
-  const ctaEl = document.getElementById('ctaLien');
-  const ctaVisible = ctaEl && window.getComputedStyle(document.getElementById('ctaAcceptation')).display !== 'none';
-  let ctaRectRelatif = null;
-  let ctaHref = null;
-  if (ctaVisible) {
-    const apercuRect = element.getBoundingClientRect();
-    const ctaRect = ctaEl.getBoundingClientRect();
-    ctaRectRelatif = {
-      x: ctaRect.left - apercuRect.left,
-      y: ctaRect.top - apercuRect.top,
-      w: ctaRect.width,
-      h: ctaRect.height
-    };
-    ctaHref = ctaEl.href;
-  }
+    const ctaEl = document.getElementById('ctaLien');
+    const ctaVisible = ctaEl && window.getComputedStyle(document.getElementById('ctaAcceptation')).display !== 'none';
+    let ctaRectRelatif = null;
+    let ctaHref = null;
+    if (ctaVisible) {
+      const apercuRect = element.getBoundingClientRect();
+      const ctaRect = ctaEl.getBoundingClientRect();
+      ctaRectRelatif = {
+        x: ctaRect.left - apercuRect.left,
+        y: ctaRect.top - apercuRect.top,
+        w: ctaRect.width,
+        h: ctaRect.height
+      };
+      ctaHref = ctaEl.href;
+    }
 
-  const canvas = await html2canvas(element, { scale: 2, useCORS: true, windowWidth: 794, width: 794 });
-  element.style.width = largeurOriginale;
-  element.style.maxWidth = maxLargeurOriginale;
+    const canvas = await html2canvas(element, { scale: 2, useCORS: true, windowWidth: 794, width: 794 });
+    element.style.width = largeurOriginale;
+    element.style.maxWidth = maxLargeurOriginale;
 
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const largeurPage = pdf.internal.pageSize.getWidth();
-  const hauteurPage = pdf.internal.pageSize.getHeight();
-  const hauteurImage = (canvas.height * largeurPage) / canvas.width;
-  const imgData = canvas.toDataURL('image/jpeg', 0.98);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const largeurPage = pdf.internal.pageSize.getWidth();
+    const hauteurPage = pdf.internal.pageSize.getHeight();
+    const hauteurImage = (canvas.height * largeurPage) / canvas.width;
+    const imgData = canvas.toDataURL('image/jpeg', 0.98);
 
-  let hauteurRestante = hauteurImage;
-  let position = 0;
-  pdf.addImage(imgData, 'JPEG', 0, position, largeurPage, hauteurImage);
-  hauteurRestante -= hauteurPage;
-  let nombrePages = 1;
-  while (hauteurRestante > 0) {
-    position = hauteurRestante - hauteurImage;
-    pdf.addPage();
+    let hauteurRestante = hauteurImage;
+    let position = 0;
     pdf.addImage(imgData, 'JPEG', 0, position, largeurPage, hauteurImage);
     hauteurRestante -= hauteurPage;
-    nombrePages++;
-  }
+    let nombrePages = 1;
+    while (hauteurRestante > 0) {
+      position = hauteurRestante - hauteurImage;
+      pdf.addPage();
+      pdf.addImage(imgData, 'JPEG', 0, position, largeurPage, hauteurImage);
+      hauteurRestante -= hauteurPage;
+      nombrePages++;
+    }
 
-  if (ctaRectRelatif && ctaHref) {
-    const ratio = largeurPage / 794;
-    const xMM = ctaRectRelatif.x * ratio;
-    const largeurMM = ctaRectRelatif.w * ratio;
-    const yDebutMM = ctaRectRelatif.y * ratio;
-    const yFinMM = (ctaRectRelatif.y + ctaRectRelatif.h) * ratio;
-    const pageDebut = Math.floor(yDebutMM / hauteurPage);
-    const pageFin = Math.floor(yFinMM / hauteurPage);
-    for (let p = pageDebut; p <= pageFin && p < nombrePages; p++) {
-      const yHautSurPage = Math.max(0, yDebutMM - p * hauteurPage);
-      const yBasSurPage = Math.min(hauteurPage, yFinMM - p * hauteurPage);
-      const hauteurLienMM = yBasSurPage - yHautSurPage;
-      if (hauteurLienMM > 0) {
-        pdf.setPage(p + 1);
-        pdf.link(xMM, yHautSurPage, largeurMM, hauteurLienMM, { url: ctaHref });
+    if (ctaRectRelatif && ctaHref) {
+      const ratio = largeurPage / 794;
+      const xMM = ctaRectRelatif.x * ratio;
+      const largeurMM = ctaRectRelatif.w * ratio;
+      const yDebutMM = ctaRectRelatif.y * ratio;
+      const yFinMM = (ctaRectRelatif.y + ctaRectRelatif.h) * ratio;
+      const pageDebut = Math.floor(yDebutMM / hauteurPage);
+      const pageFin = Math.floor(yFinMM / hauteurPage);
+      for (let p = pageDebut; p <= pageFin && p < nombrePages; p++) {
+        const yHautSurPage = Math.max(0, yDebutMM - p * hauteurPage);
+        const yBasSurPage = Math.min(hauteurPage, yFinMM - p * hauteurPage);
+        const hauteurLienMM = yBasSurPage - yHautSurPage;
+        if (hauteurLienMM > 0) {
+          pdf.setPage(p + 1);
+          pdf.link(xMM, yHautSurPage, largeurMM, hauteurLienMM, { url: ctaHref });
+        }
       }
     }
-  }
 
-  return pdf;
+    return pdf;
+  } finally {
+    if (wrapper) {
+      if (wrapperStyleOriginal !== null) wrapper.setAttribute('style', wrapperStyleOriginal);
+      else wrapper.removeAttribute('style');
+    }
+  }
 }
 
 async function genererPdfBlob() {
@@ -2817,18 +2833,11 @@ async function archiverDocument() {
   return true;
 }
 
-  async function voirPDFMobile() {
+async function voirPDFMobile() {
   const bouton = document.getElementById('boutonVoirPDF');
   const texteOriginal = bouton.textContent;
   bouton.textContent = 'Génération...';
   bouton.disabled = true;
-  const wrapper = document.getElementById('apercuWrapper');
-  const styleOriginal = wrapper.getAttribute('style');
-  wrapper.style.display = 'block';
-  wrapper.style.position = 'fixed';
-  wrapper.style.left = '-9999px';
-  wrapper.style.top = '0';
-  wrapper.style.zIndex = '-1';
   try {
     const blob = await genererPdfBlob();
     const url = URL.createObjectURL(blob);
@@ -2836,7 +2845,6 @@ async function archiverDocument() {
   } catch (e) {
     alert("Impossible de générer le PDF : " + e.message);
   } finally {
-    wrapper.setAttribute('style', styleOriginal);
     bouton.textContent = texteOriginal;
     bouton.disabled = false;
   }
