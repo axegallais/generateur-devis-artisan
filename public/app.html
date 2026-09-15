@@ -289,7 +289,16 @@
           <input type="email" id="authEmail" autocomplete="email" required />
           <label>Mot de passe</label>
           <input type="password" id="authMotDePasse" autocomplete="current-password" required minlength="6" />
-          <button type="submit" class="btn-principal" id="boutonAuth" style="margin-top:18px;">Se connecter</button>
+<div id="blocConditionsInscription" style="display:none; margin-top:14px;">
+            <div style="max-height:110px; overflow-y:auto; background:#FDFBF9; border:1px solid #E3DCCB; border-radius:6px; padding:10px 12px; font-size:11px; color:#7D5D3B; line-height:1.5;">
+              En créant un compte, tu acceptes les <a href="/cgu" target="_blank" style="color:#5C4033;">Conditions Générales d'Utilisation</a>, les <a href="/cgv" target="_blank" style="color:#5C4033;">Conditions Générales de Vente</a>, et notre <a href="/confidentialite" target="_blank" style="color:#5C4033;">Politique de confidentialité (RGPD)</a>. Ces documents précisent notamment tes droits, tes obligations, et la manière dont tes données et celles de tes clients sont traitées (voir aussi les <a href="/mentions-legales" target="_blank" style="color:#5C4033;">Mentions légales</a>).
+            </div>
+            <label style="display:flex; align-items:flex-start; gap:8px; margin-top:10px; font-size:12.5px; font-weight:normal; cursor:pointer;">
+              <input type="checkbox" id="accepteConditions" style="width:16px; height:16px; margin-top:1px; accent-color:#8B6F47; flex-shrink:0;" />
+              J'ai lu et j'accepte les CGU, CGV et la Politique de confidentialité.
+            </label>
+          </div>
+                    <button type="submit" class="btn-principal" id="boutonAuth" style="margin-top:18px;">Se connecter</button>
         </form>
         <p class="messageAuth" id="messageAuth"></p>
         <button type="button" class="lienBascule" id="basculeAuth">Pas encore de compte ? Créer un compte</button>
@@ -1458,6 +1467,7 @@ document.getElementById('basculeAuth').addEventListener('click', function() {
   document.getElementById('boutonAuth').textContent = modeAuth === 'connexion' ? 'Se connecter' : 'Créer mon compte';
   this.textContent = modeAuth === 'connexion' ? 'Pas encore de compte ? Créer un compte' : 'Déjà un compte ? Se connecter';
   afficherMessageAuth('', '');
+     document.getElementById('blocConditionsInscription').style.display = modeAuth === 'inscription' ? 'block' : 'none';
 });
 
 document.getElementById('lienMotDePasseOublie').addEventListener('click', async function() {
@@ -1484,6 +1494,10 @@ document.getElementById('formulaireAuth').addEventListener('submit', async funct
   const email = document.getElementById('authEmail').value.trim();
   const motDePasse = document.getElementById('authMotDePasse').value;
   const bouton = document.getElementById('boutonAuth');
+   if (modeAuth === 'inscription' && !document.getElementById('accepteConditions').checked) {
+        afficherMessageAuth('Merci de cocher la case pour accepter les conditions generales avant de creer ton compte.', 'erreur');
+        return;
+   }
   bouton.disabled = true;
   afficherMessageAuth('', '');
   try {
