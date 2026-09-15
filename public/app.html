@@ -325,7 +325,7 @@
   <button type="button" class="btn-secondaire" onclick="ouvrirArchiveFactures()">🧾 Archive factures/avoirs</button>
   <button type="button" class="btn-secondaire" onclick="seDeconnecter()">Se déconnecter</button>
 </div>
-<div class="conteneur">
+<div class="conteneur" id="pageGenerateur">
  <div id="encartAvisPrive" class="bloc" style="display:none; grid-column:1/-1; align-items:center; text-align:center; gap:10px;">
   <h3 style="margin:0;">Comment se passe ton expérience avec DEVIX ?</h3>
   <p style="margin:0; font-size:12px; color:#7D5D3B;">Tu viens de générer ta 4e facture — un avis rapide nous aide énormément (visible uniquement par l'équipe DEVIX, jamais publié).</p>
@@ -395,50 +395,7 @@
       </select>
     </div>
 
-    <div class="bloc" id="blocProfil">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h3>Votre Entreprise</h3>
-        <span style="font-size: 10px; color: #7D5D3B;">✓ Sauvegardé auto.</span>
-      </div>
-      <button type="button" class="btn-secondaire" style="background-color: #2C5F63; color: white; border: none;" onclick="ouvrirAssistantDemarrage()">🧙 Assistant de démarrage rapide</button>
-      <div>
-        <label>Logo</label>
-        <div id="logoPreview" style="width: 80px; height: 80px; border: 2px dashed #8B6F47; border-radius: 6px; display: flex; align-items: center; justify-content: center; background-color: #FDFBF9; overflow: hidden; margin-top: 6px;">
-          <img id="logoImg" style="max-width: 100%; max-height: 100%; object-fit: contain; display: none;" />
-          <span id="logoPlaceholder" style="font-size: 11px; color: #7D5D3B; text-align: center;">Cliquez pour ajouter</span>
-        </div>
-        <input id="logoInput" type="file" accept="image/*" style="display: none;" />
-        <button class="btn-secondaire" style="margin-top: 8px;" onclick="document.getElementById('logoInput').click()">📎 Charger un logo</button>
-        <button class="btn-suppr" style="width: 100%; margin-top: 6px;" onclick="supprimerLogo()">✕ Supprimer le logo</button>
-      </div>
-      <label>Nom/Prénom ou raison sociale<span class="oblig">*</span></label>
-      <input id="nomEntreprise" type="text" placeholder="Nom/Prénom ou raison sociale" />
-      <input id="nomCommercial" type="text" placeholder="Nom commercial (si différent, optionnel)" />
-      <label>Forme juridique<span class="oblig">*</span></label>
-      <select id="statutJuridique">
-        <option value="EI">EI / Entrepreneur individuel</option>
-        <option value="Auto-entrepreneur">Auto-entrepreneur</option>
-        <option value="EURL">EURL</option>
-        <option value="SARL">SARL</option>
-        <option value="SAS">SAS</option>
-        <option value="SASU">SASU</option>
-        <option value="Autre">Autre</option>
-      </select>
-      <div id="champCapitalSocial" style="display:none;">
-        <label>Capital social<span class="oblig">*</span></label>
-        <input id="capitalSocial" type="text" placeholder="Ex : 1 000 €" style="margin-top:4px;" />
-        <p style="margin:4px 0 0; font-size:10px; color:#7D5D3B;">Obligatoire sur les documents commerciaux des sociétés (EURL, SARL, SAS, SASU).</p>
-      </div>
-      <label>Adresse du siège social<span class="oblig">*</span></label>
-      <input id="addrEntreprise" type="text" placeholder="Adresse du siège social" />
-      <input id="telEntreprise" type="tel" placeholder="Téléphone" />
-      <input id="emailEntreprise" type="email" placeholder="Email" />
-      <label>N° SIRET<span class="oblig">*</span></label>
-      <input id="siret" type="text" placeholder="14 chiffres" />
-      <label>RCS ou RM<span class="oblig">*</span></label>
-      <input id="rcsRm" type="text" placeholder="Ex: RCS Paris ou RM 75" />
-      <input id="codeNAF" type="text" placeholder="Code NAF / APE (ex: 16.29B)" />
-    </div>
+
 
     <div class="bloc">
       <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -848,14 +805,7 @@
       </div>
     </div>
 
-    <div class="bloc" id="blocArchive" style="margin-top: 20px;">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h3 id="titreArchive">📁 Archive des envois</h3>
-        <button class="btn-secondaire" style="width: auto; padding: 6px 12px;" onclick="basculerArchive()">Voir / Masquer</button>
-      </div>
-      <p style="margin: 0; font-size: 10px; color: #7D5D3B;">Chaque devis/facture est archivé automatiquement ici dès que tu cliques sur « Envoyer par email ».</p>
-      <div id="listeArchive" style="display: none; max-height: 320px; overflow-y: auto; flex-direction: column; gap: 8px;"></div>
-    </div>
+    
 
     <div class="bloc" style="margin-top: 20px;">
       <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -1029,6 +979,65 @@
         <p id="notesApercu" style="margin: 0;"></p>
       </div>
     </div>
+  </div>
+</div>
+ <div id="pageProfil" style="display:none; max-width:700px; margin:0 auto;">
+  <button type="button" class="btn-secondaire" onclick="retourGenerateur()" style="margin-bottom:12px; width:auto;">← Retour au générateur</button>
+  <div class="bloc" id="blocProfil">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3>Votre Entreprise</h3>
+        <span style="font-size: 10px; color: #7D5D3B;">✓ Sauvegardé auto.</span>
+      </div>
+      <button type="button" class="btn-secondaire" style="background-color: #2C5F63; color: white; border: none;" onclick="ouvrirAssistantDemarrage()">🧙 Assistant de démarrage rapide</button>
+      <div>
+        <label>Logo</label>
+        <div id="logoPreview" style="width: 80px; height: 80px; border: 2px dashed #8B6F47; border-radius: 6px; display: flex; align-items: center; justify-content: center; background-color: #FDFBF9; overflow: hidden; margin-top: 6px;">
+          <img id="logoImg" style="max-width: 100%; max-height: 100%; object-fit: contain; display: none;" />
+          <span id="logoPlaceholder" style="font-size: 11px; color: #7D5D3B; text-align: center;">Cliquez pour ajouter</span>
+        </div>
+        <input id="logoInput" type="file" accept="image/*" style="display: none;" />
+        <button class="btn-secondaire" style="margin-top: 8px;" onclick="document.getElementById('logoInput').click()">📎 Charger un logo</button>
+        <button class="btn-suppr" style="width: 100%; margin-top: 6px;" onclick="supprimerLogo()">✕ Supprimer le logo</button>
+      </div>
+      <label>Nom/Prénom ou raison sociale<span class="oblig">*</span></label>
+      <input id="nomEntreprise" type="text" placeholder="Nom/Prénom ou raison sociale" />
+      <input id="nomCommercial" type="text" placeholder="Nom commercial (si différent, optionnel)" />
+      <label>Forme juridique<span class="oblig">*</span></label>
+      <select id="statutJuridique">
+        <option value="EI">EI / Entrepreneur individuel</option>
+        <option value="Auto-entrepreneur">Auto-entrepreneur</option>
+        <option value="EURL">EURL</option>
+        <option value="SARL">SARL</option>
+        <option value="SAS">SAS</option>
+        <option value="SASU">SASU</option>
+        <option value="Autre">Autre</option>
+      </select>
+      <div id="champCapitalSocial" style="display:none;">
+        <label>Capital social<span class="oblig">*</span></label>
+        <input id="capitalSocial" type="text" placeholder="Ex : 1 000 €" style="margin-top:4px;" />
+        <p style="margin:4px 0 0; font-size:10px; color:#7D5D3B;">Obligatoire sur les documents commerciaux des sociétés (EURL, SARL, SAS, SASU).</p>
+      </div>
+      <label>Adresse du siège social<span class="oblig">*</span></label>
+      <input id="addrEntreprise" type="text" placeholder="Adresse du siège social" />
+      <input id="telEntreprise" type="tel" placeholder="Téléphone" />
+      <input id="emailEntreprise" type="email" placeholder="Email" />
+      <label>N° SIRET<span class="oblig">*</span></label>
+      <input id="siret" type="text" placeholder="14 chiffres" />
+      <label>RCS ou RM<span class="oblig">*</span></label>
+      <input id="rcsRm" type="text" placeholder="Ex: RCS Paris ou RM 75" />
+      <input id="codeNAF" type="text" placeholder="Code NAF / APE (ex: 16.29B)" />
+  </div>
+</div>
+
+<div id="pageArchive" style="display:none; max-width:700px; margin:0 auto;">
+  <button type="button" class="btn-secondaire" onclick="retourGenerateur()" style="margin-bottom:12px; width:auto;">← Retour au générateur</button>
+  <div class="bloc" id="blocArchive">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 id="titreArchive">📁 Archive des envois</h3>
+        <button class="btn-secondaire" style="width: auto; padding: 6px 12px;" onclick="basculerArchive()">Voir / Masquer</button>
+      </div>
+      <p style="margin: 0; font-size: 10px; color: #7D5D3B;">Chaque devis/facture est archivé automatiquement ici dès que tu cliques sur « Envoyer par email ».</p>
+      <div id="listeArchive" style="display: none; max-height: 320px; overflow-y: auto; flex-direction: column; gap: 8px;"></div>
   </div>
 </div>
 </div>
@@ -2819,24 +2828,40 @@ function basculerArchive() {
   if (!visible) afficherArchive();
 }
 
+function retourGenerateur() {
+  document.getElementById('pageProfil').style.display = 'none';
+  document.getElementById('pageArchive').style.display = 'none';
+  document.getElementById('pageGenerateur').style.display = '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 function ouvrirProfil() {
-  document.getElementById('blocProfil').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.getElementById('pageGenerateur').style.display = 'none';
+  document.getElementById('pageArchive').style.display = 'none';
+  document.getElementById('pageProfil').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function ouvrirArchiveDevis() {
   filtreArchiveActuel = ['devis'];
   document.getElementById('titreArchive').textContent = '📁 Archive des devis';
   document.getElementById('listeArchive').style.display = 'flex';
+  document.getElementById('pageGenerateur').style.display = 'none';
+  document.getElementById('pageProfil').style.display = 'none';
+  document.getElementById('pageArchive').style.display = 'block';
   afficherArchive();
-  document.getElementById('blocArchive').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function ouvrirArchiveFactures() {
   filtreArchiveActuel = ['facture', 'avoir'];
   document.getElementById('titreArchive').textContent = '📁 Archive des factures/avoirs';
   document.getElementById('listeArchive').style.display = 'flex';
+  document.getElementById('pageGenerateur').style.display = 'none';
+  document.getElementById('pageProfil').style.display = 'none';
+  document.getElementById('pageArchive').style.display = 'block';
   afficherArchive();
-  document.getElementById('blocArchive').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function badgeStatut(e) {
