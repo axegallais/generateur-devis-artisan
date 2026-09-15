@@ -174,15 +174,17 @@
   .marqueAuth { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 600; }
   .marqueAuth .copeauAuth { width: 9px; height: 20px; background: #C97C3D; border-radius: 2px 6px 2px 6px; flex-shrink: 0; }
   .logo-devix-clair {
-    font-family: 'Roboto Slab', serif; font-weight: 700; letter-spacing: 0.5px;
+        font-family: 'Roboto Slab', serif; font-weight: 700; letter-spacing: 1px;
     color: #FBF3E7; font-size: 26px; display: flex; align-items: baseline; gap: 2px;
   }
   .logo-devix-clair .x { color: #E8944F; }
+   .logo-devix-clair .tiret { color: #E8944F; font-weight: 400; opacity: 0.85; }
   .logo-devix-sombre {
-    font-family: 'Roboto Slab', serif; font-weight: 700; letter-spacing: 0.5px;
+        font-family: 'Roboto Slab', serif; font-weight: 700; letter-spacing: 1px;
     color: #5C4033; font-size: 24px; display: flex; align-items: baseline; gap: 2px; margin-bottom: 8px;
   }
   .logo-devix-sombre .x { color: #B5651D; }
+   .logo-devix-sombre .tiret { color: #B5651D; font-weight: 400; opacity: 0.85; }
   .accrocheVitrine { max-width: 30ch; }
   .accrocheVitrine h2 { color: #FBF3E7; font-size: 26px; line-height: 1.28; font-weight: 600; margin: 0 0 12px; }
   .accrocheVitrine p { color: #D8C6AE; font-size: 13.5px; line-height: 1.6; margin: 0; }
@@ -240,7 +242,7 @@
 <div id="ecranAuth" style="display:none;">
   <div class="ecranAuthGrille">
     <div class="panneauVitrine">
-      <div class="marqueAuth"><span class="copeauAuth"></span> <span class="logo-devix-clair">DEV<span class="x">IX</span></span></div>
+      <div class="marqueAuth"><span class="copeauAuth"></span> <span class="logo-devix-clair">DEV<span class="tiret">-</span><span class="x">IX</span></span></div>
       <div class="accrocheVitrine">
         <h2>Tes devis et factures, prêts en quelques minutes.</h2>
         <p>Mentions légales à jour, clients enregistrés, PDF identique partout — pensé pour les artisans, freelances et créateurs.</p>
@@ -279,7 +281,7 @@
     </div>
     <div class="panneauFormulaire">
       <div class="carteAuth">
-        <div class="logo-devix-sombre">DEV<span class="x">IX</span></div>
+        <div class="logo-devix-sombre">DEV<span class="tiret">-</span><span class="x">IX</span></div>
         <h1>Générateur de Devis</h1>
         <p class="sousTitre">Connecte-toi pour accéder à ton espace (tes infos et documents sont liés à ton compte).</p>
         <form id="formulaireAuth">
@@ -300,7 +302,7 @@
 <div id="ecranNouveauMotDePasse" style="display:none;">
   <div class="panneauFormulaire" style="min-height:100vh;">
     <div class="carteAuth">
-      <div class="logo-devix-sombre">DEV<span class="x">IX</span></div>
+      <div class="logo-devix-sombre">DEV<span class="tiret">-</span><span class="x">IX</span></div>
       <h1>Nouveau mot de passe</h1>
       <p class="sousTitre">Choisis un nouveau mot de passe pour ton compte.</p>
       <form id="formulaireNouveauMotDePasse">
@@ -327,8 +329,8 @@
 </div>
 <div class="conteneur" id="pageGenerateur">
  <div id="encartAvisPrive" class="bloc" style="display:none; grid-column:1/-1; align-items:center; text-align:center; gap:10px;">
-  <h3 style="margin:0;">Comment se passe ton expérience avec DEVIX ?</h3>
-  <p style="margin:0; font-size:12px; color:#7D5D3B;">Tu viens de générer ta 4e facture — un avis rapide nous aide énormément (visible uniquement par l'équipe DEVIX, jamais publié).</p>
+  <h3 style="margin:0;">Comment se passe ton expérience avec DEV-IX ?</h3>
+  <p style="margin:0; font-size:12px; color:#7D5D3B;">Tu viens de générer ta 4e facture — un avis rapide nous aide énormément (visible uniquement par l'équipe DEV-IX, jamais publié).</p>
   <div id="etoilesAvisPrive" style="display:flex; gap:6px; font-size:30px; cursor:pointer; color:#D4A017;">
     <span data-etoile="1" onclick="choisirEtoileAvisPrive(1)">☆</span>
     <span data-etoile="2" onclick="choisirEtoileAvisPrive(2)">☆</span>
@@ -347,7 +349,7 @@
 <!-- FORMULAIRE -->
   <div class="no-print">
     <div style="border-left: 4px solid #8B6F47; padding-left: 16px; margin-bottom: 20px;">
-      <div class="logo-devix-sombre" style="font-size: 28px;">DEV<span class="x">IX</span></div>
+      <div class="logo-devix-sombre" style="font-size: 28px;">DEV<span class="tiret">-</span><span class="x">IX</span></div>
       <h1>Générateur de Devis</h1>
       <p style="margin: 4px 0 0; font-size: 13px; color: #7D5D3B;">Conforme aux mentions légales obligatoires</p>
       <p style="margin: 6px 0 0; font-size: 12px; color: #A32D2D;"><span class="oblig">*</span> Champ obligatoire pour un <strong>devis</strong> et/ou une <strong>facture</strong> conformes à la loi française (facture : depuis le 01/09/2026). La mention « (devis) » précise les champs propres au devis uniquement.</p>
@@ -1055,7 +1057,7 @@
 <div id="modalFeedback" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:1100; align-items:center; justify-content:center;">
   <div style="background:#F9F8F5; border-top:3px solid #8B6F47; border-radius:8px; padding:24px; width:100%; max-width:400px; max-height:85vh; overflow-y:auto;">
     <h3 style="margin:0 0 4px;">Un avis, un bug, une idée ?</h3>
-    <p style="margin:0 0 14px; font-size:12px; color:#7D5D3B;">Ton retour part directement à l'équipe DEVIX.</p>
+    <p style="margin:0 0 14px; font-size:12px; color:#7D5D3B;">Ton retour part directement à l'équipe DEV-IX.</p>
     <label>Type de retour</label>
     <div id="typeFeedbackChoix" style="display:flex; gap:6px; margin:4px 0 12px;">
       <button type="button" class="choixTypeFeedback" data-type="bug" onclick="choisirTypeFeedback('bug')" style="flex:1; padding:8px 4px; border-radius:6px; border:1.5px solid #E3DCCB; background:#FDFBF9; cursor:pointer; font-size:12px;">🐛 Bug</button>
