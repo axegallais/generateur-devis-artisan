@@ -36,6 +36,7 @@ export default function Home() {
           .conteneur-etroit { max-width: 640px; }
           header.entete { display: flex; align-items: center; justify-content: space-between; padding: 22px 24px; max-width: 1080px; margin: 0 auto; }
           .logo-devix { font-family: 'Roboto Slab', serif; font-weight: 700; letter-spacing: 0.5px; color: var(--noyer); font-size: 22px; display: flex; align-items: baseline; gap: 8px; }
+                    .logo-devix .tiret { color: var(--rouille); font-weight: 400; opacity: 0.85; }
           .logo-devix .x { color: var(--rouille); }
           .logo-devix .sous-nom { font-family: 'Inter', sans-serif; font-weight: 500; font-size: 11.5px; color: #8A7A64; letter-spacing: 0; }
           .lien-connexion { text-decoration: none; font-size: 14px; font-weight: 500; color: var(--noyer); border-bottom: 1.5px solid var(--bois); padding-bottom: 2px; }
@@ -126,7 +127,7 @@ export default function Home() {
       <header className="entete">
         <div className="logo-devix">
           <span className="copeau" style={{ width: 9, height: 20, background: 'var(--rouille)', borderRadius: '2px 6px 2px 6px', flexShrink: 0 }}></span>
-          DEV<span className="x">IX</span><span className="sous-nom">Devis &amp; factures</span>
+          DEV<span className="tiret">-</span><span className="x">IX</span><span className="sous-nom">Devis &amp; factures</span>
         </div>
         <a className="lien-connexion" href="/app.html">Se connecter</a>
       </header>
