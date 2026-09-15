@@ -1862,7 +1862,7 @@ function ouvrirAssistantDemarrage() {
 
 function fermerAssistantDemarrage() {
   document.getElementById('modalAssistant').style.display = 'none';
-  localStorage.setItem('assistantDemarrageVu', '1');
+    localStorage.setItem('assistantDemarrageVu_' + entrepriseId, '1');
 }
 
 function allerEtapeAssistant(numero) {
@@ -3253,7 +3253,7 @@ async function demarrerApplication(entreprise) {
   await rafraichirArchiveDepuisSupabase();
   await chargerRelancesAuto();
   if (applicationDemarree) { mettreAJourApercu(); return; }
-  if (!entreprise.nom && localStorage.getItem('assistantDemarrageVu') !== '1') {
+    if (!entreprise.nom && localStorage.getItem('assistantDemarrageVu_' + entrepriseId) !== '1') {
     ouvrirAssistantDemarrage();
   }
   if (!chargerBrouillon()) {
