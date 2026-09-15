@@ -1,6 +1,9 @@
 import Head from 'next/head';
+import { useEffect, useState } from 'react';
 
 export default function Home() {
+    const [anneeFin, setAnneeFin] = useState(2026);
+    useEffect(() => { setAnneeFin(new Date().getFullYear()); }, []);
   return (
     <>
       <Head>
@@ -121,6 +124,7 @@ export default function Home() {
           .cta-finale .cta-principal:hover { background: #3E2A20; }
           footer { padding: 32px 24px 44px; text-align: center; }
           footer p { font-size: 12.5px; color: #8A7A64; margin: 0; }
+                    footer a { color: #8A7A64; margin: 0 6px; }
         `}</style>
       </Head>
 
@@ -233,7 +237,16 @@ export default function Home() {
         <a className="cta-principal" href="/app.html">Commencer maintenant</a>
       </div>
 
-      <footer><p>Générateur de Devis — outil indépendant pour artisans, freelances et créateurs</p></footer>
+      <footer>
+          <p style={{ marginBottom: '8px' }}>
+            <a href="/mentions-legales">Mentions légales</a>·
+            <a href="/cgu">CGU</a>·
+            <a href="/cgv">CGV</a>·
+            <a href="/confidentialite">Confidentialité (RGPD)</a>
+          </p>
+          <p>© 2026{anneeFin > 2026 ? `–${anneeFin}` : ''} DEV-IX</p>
+          <p>Générateur de Devis — outil indépendant pour artisans, freelances et créateurs</p>
+        </footer>
     </>
   );
 }
